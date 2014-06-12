@@ -17,6 +17,6 @@
 	},
 
 	"modules": [
-		"./modules/*"
+		"core"
 	]
 }
