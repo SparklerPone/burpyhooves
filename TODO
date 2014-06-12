@@ -1,7 +1,13 @@
 TODO:
 
-More powerful command and message hook system
-Make permissions check NickServ logins (maybe)
-│16:08:54  @GyroTech | Can you make it so that I can ban people from certain functions too?  Like a restricted list? 
-│16:09:53  @GyroTech | Or maybe even rate limit them in the main channel. 
+[High Priority - Under active work]
+	- More helper functions for less repeated code in modules.
 
+[Medium Priority - Next on the list.]
+	- Better command hook system, delegate more to the command handler instead of the module.
+	- Better message hook system (regex?)
+
+[Low Priority - Will get done when everything else is out of the way.]
+	- Make permissions check NickServ logins (maybe)
+	- Per-command user whitelist/blacklist
+	- Per-command/channel ratelimiting.
