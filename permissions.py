@@ -8,7 +8,8 @@ class Permissions:
 		self.permissions = json.load(open("permissions.json"))["permissions"]
 
 	def check_permission(self, hostmask, permission="admin"):
-		for user in self.permissions:
+		for k in self.permissions:
+			users = self.permissions[k]
 			matched_nick = False
 			matched_ident = False
 			matched_host = False
