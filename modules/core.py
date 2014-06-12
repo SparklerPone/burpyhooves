@@ -8,6 +8,10 @@ class CoreModule:
 		bot.hook_manager.add_hook(CommandHook("modload", self.on_command_modload))
 
 	def on_command_modload(self, bot, ln, args):
+		if not bot.is_admin():
+			bot.reply_notice("Sorry, you must be an admin to do that!")
+			return
+		
 		if len(args) != 1:
 			bot.reply("Usage: MODLOAD <module name>")
 			return

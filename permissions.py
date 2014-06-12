@@ -1,5 +1,7 @@
 import json
 
+from fnmatch import fnmatch
+
 class Permissions:
 	def __init__(self, bot):
 		self.bot = bot
@@ -11,17 +13,17 @@ class Permissions:
 			matched_ident = False
 			matched_host = False
 			for nick in user["nicks"]:
-				if nick == hostmask.nick:
+				if fnmatch(hostmask.nick, nick):
 					matched_nick = True
 					break
 
 			for ident in user["idents"]:
-				if ident == hostmask.user:
+				if fnmatch(hostmask.user, ident):
 					matched_ident = True
 					break
 
 			for host in user["hostnames"]:
-				if host == hostmask.host:
+				if fnmatch(hostmask.host, host):
 					matched_host = True
 					break
 
