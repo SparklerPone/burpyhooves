@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 class Permissions:
 	def __init__(self, bot):
 		self.bot = bot
-		self.permissions = json.load(open("permissions.json"))
+		self.permissions = json.load(open("permissions.json"))["permissions"]
 
 	def check_permission(self, hostmask, permission="admin"):
 		for user in self.permissions:
