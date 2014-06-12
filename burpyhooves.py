@@ -1,6 +1,7 @@
 import json
 
 from modules import ModuleManager
+from permissions import Permissions
 from connection import IRCConnection
 from hooks import HookManager, EventHook, CommandHook
 
@@ -11,8 +12,10 @@ class BurpyHooves:
 		self.net = self.config["network"]
 		self.module_manager = ModuleManager(self)
 		self.hook_manager = HookManager(self)
+		self.perms = Permissions(self)
 		self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"])
 		self.running = True
+		self.state = {} # Dict used to hold stuff like last line received and last message etc...
 
 	def run(self):
 		self.connection.connect()
@@ -40,6 +43,7 @@ class BurpyHooves:
 		self.connection.loop()
 		if self.connection.has_line():
 			ln = self.connection.last_line
+			self.state["last_line"] = ln
 			self.parse_line(ln)
 			self.hook_manager.run_hooks(ln)
 
@@ -48,13 +52,18 @@ class BurpyHooves:
 		self.connection.disconnect()
 		self.running = False
 
-
 	# Helper functions
 	def hook_command(self, cmd, callback):
 		self.hook_manager.add_hook(CommandHook(cmd, callback))
 
 	def hook_event(self, event, callback):
 		self.hook_event.add_hook(EventHook(event, callback))
+
+	def is_admin(self, hostmask=None):
+		if hostmask is None:
+			hostmask = self.state["last_line"].hostmask
+
+		return self.perms.check_permission(hostmask, "admin")
 
 
 	# IRC-related stuff begins here
@@ -75,6 +84,20 @@ class BurpyHooves:
 
 	def part(self, channel):
 		self.raw("PART %s" % channel)
+
+	# IRC-related stuff that involves state.
+	def reply(self, message):
+		ln = self.state["last_line"]
+		reply_to = ln.hostmask.nick
+
+		if ln.params[0][0] == "#":
+			reply_to = ln.params[0]
+
+		self.privmsg(reply_to, message)
+
+	def reply_notice(self, message):
+		ln = self.state["last_line"]
+		self.notice(ln.params[0], message)
 
 
 

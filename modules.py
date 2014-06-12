@@ -17,6 +17,8 @@ class ModuleManager:
 		return (name, description)
 
 	def load_module(self, name):
+		if name in self.modules:
+			return "Error: Module already loaded."
 		old_path = list(sys.path)
 		sys.path[:] = ["./modules"]
 		try:
@@ -39,3 +41,5 @@ class ModuleManager:
 			if hasattr(module, "module_deinit"):
 				module.module_deinit(self.bot)
 			del self.modules[module]
+		else:
+			return "Error: Module not loaded"

@@ -1,0 +1,19 @@
+{
+	"permissions": {
+		"appledash": {
+			"nicks": ["AppleDash"],
+			"idents": ["appled"],
+			"hostnames": ["curled.up.in.his.corner"],
+
+			"permissions": ["admin"]
+		},
+
+		"somepony": {
+			"nicks": ["Somepony", "SomeponyElse"],
+			"idents": ["pony", "androirc"],
+			"hostnames": ["my.cool.vhost", "*.broadband.provider.com", "*.mobile.internet.com"],
+
+			"permissions": ["admin"]
+		}
+	}
+}
