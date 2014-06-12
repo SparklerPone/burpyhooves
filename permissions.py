@@ -9,7 +9,7 @@ class Permissions:
 
 	def check_permission(self, hostmask, permission="admin"):
 		for k in self.permissions:
-			users = self.permissions[k]
+			user = self.permissions[k]
 			matched_nick = False
 			matched_ident = False
 			matched_host = False
