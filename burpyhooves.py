@@ -54,10 +54,13 @@ class BurpyHooves:
 
 	# Helper functions
 	def hook_command(self, cmd, callback):
-		self.hook_manager.add_hook(CommandHook(cmd, callback))
+		return self.hook_manager.add_hook(CommandHook(cmd, callback))
 
 	def hook_event(self, event, callback):
-		self.hook_event.add_hook(EventHook(event, callback))
+		return self.hook_manager.add_hook(EventHook(event, callback))
+
+	def unhook_something(self, the_id):
+		self.hook_manager.remove_hook(the_id)
 
 	def is_admin(self, hostmask=None):
 		if hostmask is None:
@@ -65,6 +68,21 @@ class BurpyHooves:
 
 		return self.perms.check_permission(hostmask, "admin")
 
+	def check_condition(self, condition, false_message="Sorry, you may not do that.", reply_func=None):
+		if reply_func is None:
+			reply_func = self.reply
+
+		if condition:
+			return True
+		
+		reply_func(false_message)
+		return False
+
+	def check_permission(self, permission="admin", error_reply="Sorry, you do not have permission to do that!", reply_func=None):
+		if reply_func is None:
+			reply_func = self.reply_notice
+
+		return self.check_condition(self.perms.check_permission(self.state["last_line"].hostmask, permission), error_reply, reply_func)
 
 	# IRC-related stuff begins here
 	def _msg_like(self, verb, target, message):

@@ -5,15 +5,19 @@ class CoreModule:
 	description = "Provides core management unctionality for the bot."
 
 	def module_init(self, bot):
-		bot.hook_manager.add_hook(CommandHook("modload", self.on_command_modload))
+		self.hooks = []
+		self.hooks.append(bot.hook_command("modload", self.on_command_modload))
+		self.hooks.append(bot.hook_command("modunload", self.on_command_modunload))
+
+	def module_deinit(self, bot):
+		for hook in self.hooks:
+			bot.unhook_something(hook)
 
 	def on_command_modload(self, bot, ln, args):
-		if not bot.is_admin():
-			bot.reply_notice("Sorry, you must be an admin to do that!")
+		if not bot.check_permission():
 			return
 
-		if len(args) != 1:
-			bot.reply("Usage: MODLOAD <module name>")
+		if not bot.check_condition(len(args) == 1, "Usage: MODLOAD <module name>"):
 			return
 
 		to_load = args[0]
@@ -24,12 +28,10 @@ class CoreModule:
 			bot.reply("Sucessfully loaded module %s!" % to_load)
 
 	def on_command_modunload(self, bot, ln, args):
-		if not bot.is_admin():
-			bot.reply_notice("Sorry, you must be an admin to do that!")
+		if not bot.check_permission():
 			return
 
-		if len(args) != 1:
-			bot.reply("Usage: MODUNLOAD <module name>")
+		if not bot.check_condition(len(args) == 1, "Usage: MODUNLOAD <module name>"):
 			return
 
 		to_unload = args[0]

@@ -40,6 +40,6 @@ class ModuleManager:
 			module = self.modules[name]
 			if hasattr(module, "module_deinit"):
 				module.module_deinit(self.bot)
-			del self.modules[module]
+			del self.modules[name]
 		else:
 			return "Error: Module not loaded"
