@@ -11,7 +11,7 @@ class CoreModule:
 		if not bot.is_admin():
 			bot.reply_notice("Sorry, you must be an admin to do that!")
 			return
-		
+
 		if len(args) != 1:
 			bot.reply("Usage: MODLOAD <module name>")
 			return
@@ -22,3 +22,19 @@ class CoreModule:
 			bot.reply(result)
 		else:
 			bot.reply("Sucessfully loaded module %s!" % to_load)
+
+	def on_command_modunload(self, bot, ln, args):
+		if not bot.is_admin():
+			bot.reply_notice("Sorry, you must be an admin to do that!")
+			return
+
+		if len(args) != 1:
+			bot.reply("Usage: MODUNLOAD <module name>")
+			return
+
+		to_unload = args[0]
+		result = bot.module_manager.unload_module(to_unload)
+		if result:
+			bot.reply(result)
+		else:
+			bot.reply("Sucessfully unloaded module %s!" % to_unload)
