@@ -7,7 +7,7 @@ class Permissions:
 		self.bot = bot
 		self.permissions = json.load(open("permissions.json"))
 
-	def check_permission(hostmask, permission="admin"):
+	def check_permission(self, hostmask, permission="admin"):
 		for user in self.permissions:
 			matched_nick = False
 			matched_ident = False
