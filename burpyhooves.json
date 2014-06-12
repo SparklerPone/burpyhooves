@@ -1,0 +1,22 @@
+{
+	"me": {
+		"nicks": ["NotBurpyHooves"],
+		"ident": "nbh",
+		"gecos": "Not Burpy Hooves"
+	},
+
+	"network": {
+		"address": "irc.canternet.org",
+		"port": 6697,
+		"ssl": true,
+		"channels": ["#test"]
+	},
+
+	"misc": {
+		"command_prefix": "!"
+	},
+
+	"modules": [
+		"./modules/*"
+	]
+}
