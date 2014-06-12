@@ -35,7 +35,10 @@ class ModuleManager:
 		sys.path[:] = old_path
 		print("Loaded module: %s (%s)" % self._get_info(loaded_module))
 
-	def unload_module(self, name):
+	def unload_module(self, name, bypass_core=False):
+		if name == "core" and not bypass_core:
+			return "Error: Cannot unload the core module!"
+
 		if name in self.modules:
 			module = self.modules[name]
 			if hasattr(module, "module_deinit"):

@@ -15,15 +15,34 @@ class HookManager:
 		self.cmd_hooks = {}
 
 		self.waiting_to_unhook = []
+		self.waiting_event_hooks = []
+		self.waiting_cmd_hooks = []
 
 	def add_hook(self, hook):
 		the_id = id(hook)
 		if isinstance(hook, EventHook):
-			self.event_hooks[the_id] = hook
+			self.waiting_event_hooks.append(hook)
 		else:
-			self.cmd_hooks[the_id] = hook
+			self.waiting_cmd_hooks.append(hook)
 
 		return the_id
+
+	def really_add_hook(self, hook):
+		the_id = self.add_hook(hook)
+		self._add_hooks()
+		return the_id
+
+	def _add_hooks(self):
+		for hook in self.waiting_event_hooks:
+			the_id = id(hook)
+			self.event_hooks[the_id] = hook
+
+		for hook in self.waiting_cmd_hooks:
+			the_id = id(hook)
+			self.cmd_hooks[the_id] = hook
+
+		self.waiting_event_hooks = []
+		self.waiting_cmd_hooks = []
 
 	def remove_hook(self, the_id):
 		self.waiting_to_unhook.append(the_id)
@@ -60,3 +79,4 @@ class HookManager:
 						hook.callback(self.bot, ln, args)
 
 		self._remove_hooks()
+		self._add_hooks()
