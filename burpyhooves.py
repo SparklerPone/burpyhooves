@@ -97,7 +97,7 @@ class BurpyHooves:
 
 	def reply_notice(self, message):
 		ln = self.state["last_line"]
-		self.notice(ln.params[0], message)
+		self.notice(ln.hostmask.nick, message)
 
 
 
