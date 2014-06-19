@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 import json
 
 from modules import ModuleManager
@@ -23,6 +24,10 @@ class BurpyHooves:
 		self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
 
 		self.module_manager.load_module("core")
+		for module in self.config["modules"]:
+			result = self.module_manager.load_module(module)
+			if result:
+				print(result)
 
 		while self.running:
 			self.loop()
