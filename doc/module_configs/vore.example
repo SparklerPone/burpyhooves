@@ -1,43 +1,67 @@
 "vore": {
-	"react_channels": ["#test", "#vore"],
+    "react_channels": ["#test", "#vore"],
 
-	"react_messages": {
-		"eaten": [
-			"..."
-		],
+    "react_messages": {
+        "eaten": [
+            "..."
+        ],
 
-		"licked": [
-			"..."
-		]
-	},
+        "licked": [
+            "..."
+        ]
+    },
 
-	"command_replies": {
-		"eat_user": [
-			"..."
-		],
+    "command_replies": {
+        "eat_user": [
+            "swallows %s in a single gulp.",
+            "quickly gulps down %s and slurps up their tail.",
+            "eats %s in a flash, murring as they wiggle in his belly.",
+            "teleports %s directly into his gut.",
+            "shrinks %s down to a small size and plays with them in his mouth before eating them." 
+        ],
 
-		"eat_self": [
-			"..."
-		],
+        "eat_self": [
+            "crosses his hooves, \"Don't be silly %s.\"",
+            "gives %s a confused look. \"How am I supposed to do that?\"",
+            "noms on his own hoof.", 
+            "chases his own tail trying to latch on."
+        ],
 
-		"eat_all": [
-			"..."
-		],
+        "eat_all": [
+            "runs around the room swallowing them one by one.",
+            "shrinks the entire room with a flash and eats everypony in a single gulp.",
+            "slurps down the planet and everypony on it."
+        ],
 
-		"cockvore_user": [
-			"..."
-		],
+        "cockvore_user": [
+            "shoves %s down his cock face first, patting the bulge.",
+            "pushes %s Down his shaft, turns them to cum, then shoots them out.",
+            "slides %s into his cock and sloshes them around in his pendulous testicles.",
+            "pulls %s down his dick and melts them into cum."
+        ],
 
-		"cockvore_self": [
-			"..."
-		],
+        "cockvore_self": [
+              "shoves his own head into his cock, and jacks off from the inside.", 
+              "raises an eyebrow at %s. \"You can't cock vore yourself you silly goose.\""
+        ],
 
-		"inflate_user": [
-			"..."
-		],
+        "cockvore_all": [
+            "engulfs everyone with his cock, reveling in his squirming balls.",
+            "shrinks everypony in the room and stuffs them one by one down his dick."
+        ],
 
-		"inflate_self": [
-			"..."
-		]
-	}
+        "inflate_user": [
+            "attaches an airhose to %s's plothole and turns on the switch.",
+            "shoves a bicycle pump tube down %s's throat and begins to pump.",
+            "steals a fire engine and forcefeeds %s the fire hose.",
+            "gives aggressive mouth to mouth to %s"
+        ],
+
+        "inflate_self": [
+            "attaches an airhose to his own plothole and turns on the switch.", 
+            "shoves a bicycle pump tube down his throat and begins to pump.", 
+            "steals a fire engine and feeds himself the fire hose.",
+            "opens a can of compressed air and swallows it."
+        ]
+    }
 }

@@ -17,6 +17,8 @@ class BurpyHooves:
 		self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"])
 		self.running = True
 		self.state = {} # Dict used to hold stuff like last line received and last message etc...
+		self.log_writer = open("logs/burpyhooves.log", "a", 1) # 1 means line buffered.
+		self.debug_writer = open("logs/debug.log", "a", 1)
 
 	def run(self):
 		self.connection.connect()
@@ -34,10 +36,12 @@ class BurpyHooves:
 
 	def raw(self, line):
 		print("<- %s" % line)
+		self.debug("---", "<- %s" % line)
 		self.connection.write_line(line)
 
 	def parse_line(self, ln):
 		print("-> %s" % ln.linestr)
+		self.debug("---", "-> %s" % ln.linestr)
 		if ln.command == "PING":
 			self.raw(ln.linestr.replace("PING", "PONG"))
 		elif ln.command == "376":
@@ -56,9 +60,18 @@ class BurpyHooves:
 		self.raw("QUIT :Bye!")
 		self.connection.disconnect()
 		self.running = False
+		self.log_writer.close()
+		self.debug_writer.close()
 
 	def rehash(self):
 		self.config = json.load(open("burpyhooves.json")) # Temp hack!
+
+	# Logging stuff
+	def log(self, tag, msg):
+		self.log_writer.write("[%s] %s\n" % (tag, msg))
+
+	def debug(self, tag, msg):
+		self.debug_writer.write("[%s] %s\n" % (tag, msg))
 
 	# Helper functions
 	def hook_command(self, cmd, callback):

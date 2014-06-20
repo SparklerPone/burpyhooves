@@ -21,25 +21,46 @@ class VoreModule:
 
 		self.hooks = []
 		self.hooks.append(bot.hook_command("eat", self.on_command_eat))
+		self.hooks.append(bot.hook_command("cockvore", self.on_command_cockvore))
+		self.hooks.append(bot.hook_command("inflate", self.on_command_inflate))
+
+	def do_command_reply(self, bot, target, replies):
+		# Replies is a 3-tuple of lists that looks like: (replies for target=me, replies for target=all, replies for target=user)
+		reply = None
+		if re.match(self.self_regex, target, re.IGNORECASE): # !eat BurpyHooves
+			reply = random.choice(replies[0])
+		elif re.match(self.all_regex, target, re.IGNORECASE): # !eat everypony
+			reply = random.choice(replies[1])
+		else:
+			reply = random.choice(replies[2]) # !eat AppleDash (Or any other user.)
+
+		try:
+			bot.reply_act(reply % target)
+		except TypeError: # Format string wasn't filled. (No %s)
+			bot.reply_act(reply)
 
 	def on_command_eat(self, bot, ln, args):
-		me = bot.me["nicks"][0] # Temp hack!
-
 		eaten = ln.hostmask.nick
 		if len(args) > 0:
 			eaten = " ".join(args)
 		eaten = eaten.strip()
 
-		reply = None
+		self.do_command_reply(bot, eaten, (self.cmd_replies["eat_self"], self.cmd_replies["eat_all"], self.cmd_replies["eat_user"]))
 
-		if re.match(self.self_regex, eaten, re.IGNORECASE): # !eat BurpyHooves
-			reply = random.choice(self.cmd_replies["eat_self"])
-		elif re.match(self.all_regex, eaten, re.IGNORECASE): # !eat everypony
-			reply = random.choice(self.cmd_replies["eat_all"])
-		else:
-			reply = random.choice(self.cmd_replies["eat_user"]) # !eat AppleDash (Or any other user.)
+	def on_command_cockvore(self, bot, ln, args):
+		cockvored = ln.hostmask.nick
+		if len(args) > 0:
+			cockvored = " ".join(args)
+		cockvored = cockvored.strip()
 
-		try:
-			bot.reply_act(reply % eaten)
-		except TypeError:
-			bot.reply_act(reply)
+		self.do_command_reply(bot, cockvored, (self.cmd_replies["cockvore_self"], self.cmd_replies["cockvore_all"], self.cmd_replies["cockvore_user"]))
+
+	def on_command_inflate(self, bot, ln, args):
+		inflated = ln.hostmask.nick
+		if len(args) > 0:
+			inflated = " ".join(args)
+		inflated = inflated.strip()
+		if re.match(self.all_regex, inflated, re.IGNORECASE): # Not implemented
+			return None
+
+		self.do_command_reply(bot, inflated, (self.cmd_replies["inflate_self"], [], self.cmd_replies["inflate_user"]))
