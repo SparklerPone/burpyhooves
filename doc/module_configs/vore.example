@@ -1,0 +1,39 @@
+"vore": {
+	"react_channels": ["#test", "#vore"],
+
+	"react_messages": {
+		"eaten": [
+			"..."
+		],
+
+		"licked": [
+			"..."
+		]
+	},
+
+	"command_replies": {
+		"eat_user": [
+			"..."
+		],
+
+		"eat_self": [
+			"..."
+		],
+
+		"cockvore_user": [
+			"..."
+		],
+
+		"cockvore_self": [
+			"..."
+		],
+
+		"inflate_user": [
+			"..."
+		],
+
+		"inflate_self": [
+			"..."
+		]
+	}
+}
