@@ -27,7 +27,9 @@ class ModuleManager:
 			setattr(loaded_module, "bot", self)
 			self.modules[name] = loaded_module
 			if hasattr(loaded_module, "module_init"):
-				loaded_module.module_init(self.bot)
+				result = loaded_module.module_init(self.bot)
+				if result is not None:
+					return "Error loading module: module_init() says: %s" % result
 		except Exception as e:
 			sys.path[:] = old_path
 			return "Error loading module: %s" % str(e)
