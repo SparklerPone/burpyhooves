@@ -55,3 +55,6 @@ docs/_build/
 # bot configs
 burpyhooves.json
 permissions.json
+
+# bot logs
+logs/*.log

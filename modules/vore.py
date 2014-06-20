@@ -39,4 +39,7 @@ class VoreModule:
 		else:
 			reply = random.choice(self.cmd_replies["eat_user"]) # !eat AppleDash (Or any other user.)
 
-		bot.reply_act(reply % eaten)
+		try:
+			bot.reply_act(reply % eaten)
+		except TypeError:
+			bot.reply_act(reply)
