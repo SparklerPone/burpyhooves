@@ -6,6 +6,7 @@ TODO:
 [Medium Priority - Next on the list.]
 	- Better command hook system, delegate more to the command handler instead of the module.
 	- Better message hook system (regex?)
+	- Proper logging
 
 [Low Priority - Will get done when everything else is out of the way.]
 	- Make permissions check NickServ logins (maybe)
