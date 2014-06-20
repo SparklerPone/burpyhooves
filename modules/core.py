@@ -9,6 +9,7 @@ class CoreModule:
 		self.hooks.append(bot.hook_command("modload", self.on_command_modload))
 		self.hooks.append(bot.hook_command("modunload", self.on_command_modunload))
 		self.hooks.append(bot.hook_command("modreload", self.on_command_modreload))
+		self.hooks.append(bot.hook_command("rehash", self.on_command_rehash))
 
 	def module_deinit(self, bot):
 		for hook in self.hooks:
@@ -60,3 +61,10 @@ class CoreModule:
 			bot.reply(result)
 		else:
 			bot.reply("Sucessfully reloaded module: %s!" % to_reload)
+
+	def on_command_rehash(self, bot, ln, args):
+		if not bot.check_permission():
+			return
+
+		bot.rehash()
+		bot.reply("Successfully rehashed!")

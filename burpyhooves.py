@@ -57,6 +57,9 @@ class BurpyHooves:
 		self.connection.disconnect()
 		self.running = False
 
+	def rehash(self):
+		self.config = json.load(open("burpyhooves.json")) # Temp hack!
+
 	# Helper functions
 	def hook_command(self, cmd, callback):
 		return self.hook_manager.add_hook(CommandHook(cmd, callback))
