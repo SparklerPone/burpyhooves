@@ -118,10 +118,12 @@ class BurpyHooves:
 
 		self.privmsg(reply_to, message)
 
+	def reply_act(self, action):
+		self.reply("\x01ACTION %s\x01" % action) # DRY
+
 	def reply_notice(self, message):
 		ln = self.state["last_line"]
 		self.notice(ln.hostmask.nick, message)
-
 
 
 loaded = json.load(open("./burpyhooves.json"))
