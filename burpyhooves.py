@@ -65,7 +65,7 @@ class BurpyHooves:
         self.debug_writer.close()
 
     def rehash(self):
-        self.config = json.load(self.config_file)
+        self.config = json.load(open(self.config_file))
 
     # Logging stuff
     def log(self, tag, msg):
@@ -108,7 +108,6 @@ class BurpyHooves:
 
     # IRC-related stuff begins here
     def _msg_like(self, verb, target, message):
-        self.privmsg()
         self.raw("%s %s :%s" % (verb, target, message))
 
     def privmsg(self, target, message):
