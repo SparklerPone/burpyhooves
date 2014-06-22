@@ -7,8 +7,9 @@ from connection import IRCConnection
 from hooks import HookManager, EventHook, CommandHook
 
 class BurpyHooves:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, config_file):
+        self.config_file = config_file
+        self.config = json.load(open(self.config_file))
         self.me = self.config["me"]
         self.net = self.config["network"]
         self.module_manager = ModuleManager(self)
@@ -64,7 +65,7 @@ class BurpyHooves:
         self.debug_writer.close()
 
     def rehash(self):
-        self.config = json.load(open("burpyhooves.json"))  # Temp hack!
+        self.config = json.load(self.config_file)
 
     # Logging stuff
     def log(self, tag, msg):
@@ -142,9 +143,7 @@ class BurpyHooves:
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
 
-
-loaded = json.load(open("./burpyhooves.json"))
-bh = BurpyHooves(loaded)
+bh = BurpyHooves("./burpyhooves.json")
 try:
     bh.run()
 except KeyboardInterrupt:
