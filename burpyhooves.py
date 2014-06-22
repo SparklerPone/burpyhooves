@@ -16,13 +16,13 @@ class BurpyHooves:
         self.perms = Permissions(self)
         self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"])
         self.running = True
-        self.state = {} # Dict used to hold stuff like last line received and last message etc...
-        self.log_writer = open("logs/burpyhooves.log", "a", 1) # 1 means line buffered.
+        self.state = {}  # Dict used to hold stuff like last line received and last message etc...
+        self.log_writer = open("logs/burpyhooves.log", "a", 1)  # 1 means line buffered.
         self.debug_writer = open("logs/debug.log", "a", 1)
 
     def run(self):
         self.connection.connect()
-        self.raw("NICK %s" % self.me["nicks"][0]) # Nicks thing is a temp hack
+        self.raw("NICK %s" % self.me["nicks"][0])  # Nicks thing is a temp hack
         self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
 
         self.module_manager.load_module("core")
@@ -64,7 +64,7 @@ class BurpyHooves:
         self.debug_writer.close()
 
     def rehash(self):
-        self.config = json.load(open("burpyhooves.json")) # Temp hack!
+        self.config = json.load(open("burpyhooves.json"))  # Temp hack!
 
     # Logging stuff
     def log(self, tag, msg):
@@ -107,6 +107,7 @@ class BurpyHooves:
 
     # IRC-related stuff begins here
     def _msg_like(self, verb, target, message):
+        self.privmsg()
         self.raw("%s %s :%s" % (verb, target, message))
 
     def privmsg(self, target, message):
@@ -135,7 +136,7 @@ class BurpyHooves:
         self.privmsg(reply_to, message)
 
     def reply_act(self, action):
-        self.reply("\x01ACTION %s\x01" % action) # DRY
+        self.reply("\x01ACTION %s\x01" % action)  # DRY
 
     def reply_notice(self, message):
         ln = self.state["last_line"]
