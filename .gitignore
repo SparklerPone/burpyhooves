@@ -58,3 +58,6 @@ permissions.json
 
 # bot logs
 logs/*.log
+
+# PyCharm
+.idea/*
