@@ -24,6 +24,10 @@ class VoreModule:
 		self.hooks.append(bot.hook_command("cockvore", self.on_command_cockvore))
 		self.hooks.append(bot.hook_command("inflate", self.on_command_inflate))
 
+	def module_deinit(self, bot):
+		for hook in self.hooks:
+			bot.unhook_something(hook)
+
 	def do_command_reply(self, bot, target, replies):
 		# Replies is a 3-tuple of lists that looks like: (replies for target=me, replies for target=all, replies for target=user)
 		reply = None

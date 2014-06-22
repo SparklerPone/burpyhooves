@@ -68,3 +68,13 @@ class CoreModule:
 
 		bot.rehash()
 		bot.reply("Successfully rehashed!")
+
+	def on_command_join(self, bot, ln, args):
+		if not bot.check_permission():
+			return
+
+		if not bot.check_condition((len(args) == 1) and args[0][0] == "#", "Usage: JOIN <channel>"):
+			return
+
+		bot.join(args[0])
+		bot.reply("I have joines %s." % args[0])

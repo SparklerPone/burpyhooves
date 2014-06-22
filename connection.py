@@ -13,6 +13,8 @@ class IRCConnection:
 		if self.ssl:
 			self.socket = ssl.wrap_socket(self.socket)
 
+		self.readbuffer = ""
+		self.buffer = []
 		self.last_line = None
 
 	def connect(self):
