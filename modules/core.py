@@ -1,8 +1,6 @@
-from hooks import EventHook, CommandHook
-
 class CoreModule:
     name = "Core"
-    description = "Provides core management unctionality for the bot."
+    description = "Provides core management functionality for the bot."
 
     def module_init(self, bot):
         self.hooks = []
@@ -10,6 +8,8 @@ class CoreModule:
         self.hooks.append(bot.hook_command("modunload", self.on_command_modunload))
         self.hooks.append(bot.hook_command("modreload", self.on_command_modreload))
         self.hooks.append(bot.hook_command("rehash", self.on_command_rehash))
+        self.hooks.append(bot.hook_command("join", self.on_command_join))
+        self.hooks.append(bot.hook_command("part", self.on_command_part))
 
     def module_deinit(self, bot):
         for hook in self.hooks:
@@ -27,7 +27,7 @@ class CoreModule:
         if result:
             bot.reply(result)
         else:
-            bot.reply("Sucessfully loaded module %s!" % to_load)
+            bot.reply("Successfully loaded module %s!" % to_load)
 
     def on_command_modunload(self, bot, ln, args):
         if not bot.check_permission():
@@ -41,7 +41,7 @@ class CoreModule:
         if result:
             bot.reply(result)
         else:
-            bot.reply("Sucessfully unloaded module %s!" % to_unload)
+            bot.reply("Successfully unloaded module %s!" % to_unload)
 
     def on_command_modreload(self, bot, ln, args):
         if not bot.check_permission():
@@ -77,4 +77,14 @@ class CoreModule:
             return
 
         bot.join(args[0])
-        bot.reply("I have joines %s." % args[0])
+        bot.reply("I have joined %s." % args[0])
+
+    def on_command_part(self, bot, ln, args):
+        if not bot.check_permission():
+            return
+
+        if not bot.check_condition((len(args) == 1) and args[0][0] == "#", "Usage: PART <channel>"):
+            return
+
+        bot.part(args[0])
+        bot.reply("I have parted %s." % args[0])

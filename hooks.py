@@ -1,12 +1,17 @@
+import traceback
+
+
 class EventHook:
     def __init__(self, event, callback):
         self.event = event
         self.callback = callback
 
+
 class CommandHook:
     def __init__(self, command, callback):
         self.command = command
         self.callback = callback
+
 
 class HookManager:
     def __init__(self, bot):
@@ -65,7 +70,12 @@ class HookManager:
         for hook_id in self.event_hooks:
             hook = self.event_hooks[hook_id]
             if hook.event.lower() == ln.command.lower():
-                hook.callback(self.bot, ln)
+                try:
+                    hook.callback(self.bot, ln)
+                except Exception as e:
+                    print("Exception running event hook %s for event '%s'!" % (str(id(hook)), hook.event))
+                    traceback.print_exc()
+
 
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
@@ -76,7 +86,11 @@ class HookManager:
                 for hook_id in self.cmd_hooks:
                     hook = self.cmd_hooks[hook_id]
                     if hook.command.lower() == command.lower():
-                        hook.callback(self.bot, ln, args)
+                        try:
+                            hook.callback(self.bot, ln, args)
+                        except Exception as e:
+                            print("Exception running command hook %s for command '%s'!" % (str(id(hook)), hook.command))
+                            traceback.print_exc()
 
         self._remove_hooks()
         self._add_hooks()

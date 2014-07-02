@@ -62,7 +62,8 @@ class VoreModule:
         if len(args) > 0:
             inflated = " ".join(args)
         inflated = inflated.strip()
-        if re.match(self.all_regex, inflated, re.IGNORECASE): # Not implemented
-            return None
+        if re.match(self.all_regex, inflated, re.IGNORECASE):  # Not implemented
+            return
 
         self.do_command_reply(bot, inflated, (self.cmd_replies["inflate_self"], [], self.cmd_replies["inflate_user"]))
+

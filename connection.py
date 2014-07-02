@@ -1,8 +1,10 @@
 import ssl
 import select
 import socket
+import threading
 
 from line import Line
+
 
 class IRCConnection:
     def __init__(self, host, port, use_ssl=False):
@@ -13,9 +15,8 @@ class IRCConnection:
         if self.ssl:
             self.socket = ssl.wrap_socket(self.socket)
 
-        self.readbuffer = ""
-        self.buffer = []
         self.last_line = None
+        self.lock = threading.Lock()
 
     def connect(self):
         self.socket.connect((self.host, self.port))
@@ -46,4 +47,5 @@ class IRCConnection:
         return self.last_line is not None
 
     def write_line(self, line):
-        self.socket.send("%s\r\n" % line)
+        with self.lock:  # We use a lock here because some modules might call reply() from a new thread, which might end up breaking here.
+            self.socket.send("%s\r\n" % line)
