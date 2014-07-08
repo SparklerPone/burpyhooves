@@ -20,7 +20,7 @@ class BurpyHooves:
         self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"])
         self.running = True
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
-        self.db = Database("burpyhooves.db")
+        self.db = Database("etc/burpyhooves.db")
         self.db.connect()
 
     def run(self):
@@ -132,7 +132,7 @@ class BurpyHooves:
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
 
-bh = BurpyHooves("./burpyhooves.json")
+bh = BurpyHooves("etc/burpyhooves.json")
 try:
     bh.run()
 except KeyboardInterrupt:
