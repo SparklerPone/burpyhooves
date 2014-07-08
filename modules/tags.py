@@ -58,6 +58,9 @@ class TagsModule(Module):
         if len(args) > 0:
             user = args[0]
 
+        if user.lower() != ln.hostmask.nick.lower() and (not bot.check_permission("admin", "You must be an admin to clear tags that are not attached to your nick!")):
+            return
+
         bot.db.execute("DELETE FROM tags WHERE LOWER(user)=?", (user.lower(),))
 
         bot.reply("I have cleared %s's tags for you." % user)
