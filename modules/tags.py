@@ -19,7 +19,7 @@ class TagsModule(Module):
         user = ""
         if len(args) == 1:
             user = ln.hostmask.nick
-            tags = [tag.strip() for tag in args[0].split("|")]
+            tags = [tag.strip() for tag in " ".join(args).split("|")]
         else:
             user = args[0]
             tags = [tag.strip() for tag in " ".join(args[1:]).split("|")]
