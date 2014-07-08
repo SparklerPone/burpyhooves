@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 import json
+from database import Database
 
 from modules import ModuleManager
 from permissions import Permissions
@@ -19,6 +20,7 @@ class BurpyHooves:
         self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"])
         self.running = True
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
+        self.db = Database("burpyhooves.db")
 
     def run(self):
         self.connection.connect()

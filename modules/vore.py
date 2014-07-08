@@ -1,7 +1,10 @@
 import re
 import random
 
-class VoreModule:
+from modules import Module
+
+
+class VoreModule(Module):
     name = "Vore"
     description = "#vore-specific commands and chat responses."
 
@@ -17,28 +20,23 @@ class VoreModule:
         self.reacts = self.config["react_messages"]
         self.cmd_replies = self.config["command_replies"]
 
-        self.hooks = []
-        self.hooks.append(bot.hook_command("eat", self.on_command_eat))
-        self.hooks.append(bot.hook_command("cockvore", self.on_command_cockvore))
-        self.hooks.append(bot.hook_command("inflate", self.on_command_inflate))
-
-    def module_deinit(self, bot):
-        for hook in self.hooks:
-            bot.unhook_something(hook)
+        self.hook_command("eat", self.on_command_eat)
+        self.hook_command("cockvore", self.on_command_cockvore)
+        self.hook_command("inflate", self.on_command_inflate)
 
     def do_command_reply(self, bot, target, replies):
         # Replies is a 3-tuple of lists that looks like: (replies for target=me, replies for target=all, replies for target=user)
         reply = None
-        if re.match(self.self_regex, target, re.IGNORECASE): # !eat BurpyHooves
+        if re.match(self.self_regex, target, re.IGNORECASE):  # !eat BurpyHooves
             reply = random.choice(replies[0])
-        elif re.match(self.all_regex, target, re.IGNORECASE): # !eat everypony
+        elif re.match(self.all_regex, target, re.IGNORECASE):  # !eat everypony
             reply = random.choice(replies[1])
         else:
-            reply = random.choice(replies[2]) # !eat AppleDash (Or any other user.)
+            reply = random.choice(replies[2])  # !eat AppleDash (Or any other user.)
 
         try:
             bot.reply_act(reply % target)
-        except TypeError: # Format string wasn't filled. (No %s)
+        except TypeError:  # Format string wasn't filled. (No %s)
             bot.reply_act(reply)
 
     def on_command_eat(self, bot, ln, args):

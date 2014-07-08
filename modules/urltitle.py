@@ -3,16 +3,15 @@ import urllib2
 import threading
 
 from bs4 import BeautifulSoup
+from modules import Module
 
 
-class TitleModule:
+class TitleModule(Module):
+    name = "URLTitle"
+    description = "Automatically gets titles of URLs posted in channels."
+
     def module_init(self, bot):
-        self.hooks = []
-        self.hooks.append(bot.hook_event("PRIVMSG", self.on_privmsg))
-
-    def module_deinit(self, bot):
-        for hook in self.hooks:
-            bot.unhook_something(hook)
+        self.hook_event("PRIVMSG", self.on_privmsg)
 
     def on_privmsg(self, bot, ln):
         sender = ln.hostmask.nick
@@ -38,7 +37,7 @@ class TitleFetchThread(threading.Thread):
         try:
             data = urllib2.urlopen(self.url, None, 1.5).read()
         except Exception as e:
-            print("urltitle", "Error fetching title for URL '%s': %s" % (self.url, str(e)))
+            print("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
             return
 
         soup = BeautifulSoup(data)

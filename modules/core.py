@@ -1,15 +1,17 @@
-class CoreModule:
+from modules import Module
+
+
+class CoreModule(Module):
     name = "Core"
     description = "Provides core management functionality for the bot."
 
     def module_init(self, bot):
-        self.hooks = []
-        self.hooks.append(bot.hook_command("modload", self.on_command_modload))
-        self.hooks.append(bot.hook_command("modunload", self.on_command_modunload))
-        self.hooks.append(bot.hook_command("modreload", self.on_command_modreload))
-        self.hooks.append(bot.hook_command("rehash", self.on_command_rehash))
-        self.hooks.append(bot.hook_command("join", self.on_command_join))
-        self.hooks.append(bot.hook_command("part", self.on_command_part))
+        self.hook_command("modload", self.on_command_modload)
+        self.hook_command("modunload", self.on_command_modunload)
+        self.hook_command("modreload", self.on_command_modreload)
+        self.hook_command("rehash", self.on_command_rehash)
+        self.hook_command("join", self.on_command_join)
+        self.hook_command("part", self.on_command_part)
 
     def module_deinit(self, bot):
         for hook in self.hooks:
@@ -60,7 +62,7 @@ class CoreModule:
         if result:
             bot.reply(result)
         else:
-            bot.reply("Sucessfully reloaded module: %s!" % to_reload)
+            bot.reply("Successfully reloaded module: %s!" % to_reload)
 
     def on_command_rehash(self, bot, ln, args):
         if not bot.check_permission():

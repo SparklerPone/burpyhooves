@@ -56,8 +56,8 @@ docs/_build/
 burpyhooves.json
 permissions.json
 
-# bot logs
-logs/*.log
+# bot database
+burpyhooves.db
 
 # PyCharm
 .idea/*

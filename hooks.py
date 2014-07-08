@@ -76,7 +76,6 @@ class HookManager:
                     print("Exception running event hook %s for event '%s'!" % (str(id(hook)), hook.event))
                     traceback.print_exc()
 
-
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
             splitmsg = message.split(" ")
