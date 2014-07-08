@@ -1,4 +1,6 @@
 import sys
+import traceback
+
 
 class ModuleManager:
     def __init__(self, bot):
@@ -29,15 +31,17 @@ class ModuleManager:
                 return "Error loading module '%s': Not a Module (forgetting something?)" % name
 
             setattr(loaded_module, "bot", self.bot)
-            self.modules[name] = loaded_module
             loaded_module._module_init(self.bot)
             if hasattr(loaded_module, "module_init"):
                 result = loaded_module.module_init(self.bot)
                 if result:
                     sys.path[:] = old_path
                     return "Error loading module '%s': %s" % (name, result)
+
+            self.modules[name] = loaded_module
         except Exception as e:
             sys.path[:] = old_path
+            traceback.print_exc()
             return "Error loading module: '%s': %s" % (name, str(e))
 
         sys.path[:] = old_path

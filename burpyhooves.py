@@ -21,6 +21,7 @@ class BurpyHooves:
         self.running = True
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
         self.db = Database("burpyhooves.db")
+        self.db.connect()
 
     def run(self):
         self.connection.connect()

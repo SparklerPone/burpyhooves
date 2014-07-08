@@ -53,8 +53,8 @@ coverage.xml
 docs/_build/
 
 # bot configs
-burpyhooves.json
-permissions.json
+etc/burpyhooves.json
+etc/permissions.json
 
 # bot database
 burpyhooves.db
