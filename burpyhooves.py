@@ -91,11 +91,13 @@ class BurpyHooves:
         reply_func(false_message)
         return False
 
-    def check_permission(self, permission="admin", error_reply="Sorry, you do not have permission to do that!", reply_func=None):
+    def check_permission(self, permission="admin", error_reply="Sorry, you do not have permission to do that!",
+                         reply_func=None):
         if reply_func is None:
             reply_func = self.reply_notice
 
-        return self.check_condition(self.perms.check_permission(self.state["last_line"].hostmask, permission), error_reply, reply_func)
+        return self.check_condition(self.perms.check_permission(self.state["last_line"].hostmask, permission),
+                                    error_reply, reply_func)
 
     # IRC-related stuff begins here
     def _msg_like(self, verb, target, message):
@@ -133,10 +135,11 @@ class BurpyHooves:
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
 
+
 conf = "etc/burpyhooves.json"
 if len(sys.argv) > 1:
-	conf = sys.argv[1]
-print sys.argv[1]
+    conf = sys.argv[1]
+
 bh = BurpyHooves(conf)
 try:
     bh.run()
