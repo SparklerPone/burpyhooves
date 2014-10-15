@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import sys
 import json
+import logging
 from database import Database
 
 from modules import ModuleManager
@@ -23,6 +24,7 @@ class BurpyHooves:
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
         self.db = Database("etc/burpyhooves.db")
         self.db.connect()
+        logging.basicConfig(level=getattr(logging, self.config["misc"]["loglevel"]), format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     def run(self):
         self.connection.connect()
@@ -30,19 +32,17 @@ class BurpyHooves:
         self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
 
         for module in self.config["modules"]:
-            result = self.module_manager.load_module(module)
-            if result:
-                print(result)
+            self.module_manager.load_module(module)
 
         while self.running:
             self.loop()
 
     def raw(self, line):
-        print("<- %s" % line)
+        logging.debug("[IRC] <- %s" % line)
         self.connection.write_line(line)
 
     def parse_line(self, ln):
-        print("-> %s" % ln.linestr)
+        logging.debug("[IRC] -> %s" % ln.linestr)
         if ln.command == "PING":
             self.raw(ln.linestr.replace("PING", "PONG"))
         elif ln.command == "376":
@@ -129,7 +129,7 @@ class BurpyHooves:
         self.privmsg(reply_to, message)
 
     def reply_act(self, action):
-        self.reply("\x01ACTION %s\x01" % action)  # DRY
+        self.reply("\x01ACTION %s\x01" % action)
 
     def reply_notice(self, message):
         ln = self.state["last_line"]

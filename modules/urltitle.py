@@ -1,4 +1,5 @@
 import re
+import logging
 import urllib2
 import threading
 
@@ -37,7 +38,7 @@ class TitleFetchThread(threading.Thread):
         try:
             data = urllib2.urlopen(self.url, None, 1.5).read()
         except Exception as e:
-            print("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
+            logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
             return
 
         soup = BeautifulSoup(data)

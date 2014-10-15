@@ -1,4 +1,5 @@
 import sys
+import logging
 import traceback
 
 class ModuleManager:
@@ -19,7 +20,9 @@ class ModuleManager:
 
     def load_module(self, name):
         if name in self.modules:
+            logging.error("Module already loaded.")
             return "Error: Module already loaded."
+
         old_path = list(sys.path)
         sys.path.insert(0, "./modules")
         try:
@@ -27,6 +30,7 @@ class ModuleManager:
             loaded_module = getattr(imported, [x for x in dir(imported) if "__" not in x and "Module" in x and len(x) > len("Module")][0])()
             if not isinstance(loaded_module, Module):
                 sys.path[:] = old_path
+                logging.error("Error loading module '%s': Not a Module (forgetting something?)" % name)
                 return "Error loading module '%s': Not a Module (forgetting something?)" % name
 
             setattr(loaded_module, "bot", self.bot)
@@ -35,20 +39,24 @@ class ModuleManager:
                 result = loaded_module.module_init(self.bot)
                 if result:
                     sys.path[:] = old_path
+                    logging.error("Error loading module '%s': %s" % (name, result))
                     return "Error loading module '%s': %s" % (name, result)
 
             self.modules[name] = loaded_module
         except Exception as e:
             sys.path[:] = old_path
             x = "Error loading module: '%s': %s" % (name, str(e))
-            traceback.print_exc()
+            #traceback.print_exc()
+            logging.exception(x, exc_info=sys.exc_info())
             return x
 
         sys.path[:] = old_path
-        print("Loaded module: %s (%s)" % self._get_info(loaded_module))
+        logging.info("Loaded module: %s (%s)" % self._get_info(loaded_module))
+        return "Loaded module: %s (%s)" % self._get_info(loaded_module)
 
     def unload_module(self, name, bypass_core=False):
         if name == "core" and not bypass_core:
+            logging.error("Error: Cannot unload the core module!")
             return "Error: Cannot unload the core module!"
 
         if name in self.modules:
@@ -59,9 +67,11 @@ class ModuleManager:
             del self.modules[name]
             del sys.modules[name]
         else:
-            return "Error: Module not loaded"
+            logging.error("Error: Module not loaded")
+            return "Error: Module nod loaded."
 
-        print("Unloaded module: %s (%s)" % self._get_info(module))
+        logging.info("Unloaded module: %s (%s)" % self._get_info(module))
+        return "Unloaded module: %s (%s)" % self._get_info(module)
 
 
 class Module:

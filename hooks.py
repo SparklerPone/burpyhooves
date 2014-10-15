@@ -1,3 +1,5 @@
+import sys
+import logging
 import traceback
 
 from collections import defaultdict
@@ -59,8 +61,8 @@ class HookManager:
                 try:
                     hook.callback(self.bot, event_args)
                 except Exception as e:
-                    print("Error running hooks for event %s!" % event)
-                    traceback.print_exc()
+                    logging.error("Error running hooks for event %s!" % event, exc_info=sys.exc_info())
+                    #traceback.print_exc()
 
         self._remove_hooks()
         self._add_hooks()

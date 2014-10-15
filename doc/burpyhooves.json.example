@@ -13,7 +13,8 @@
 	},
 
 	"misc": {
-		"command_prefix": "!"
+		"command_prefix": "!",
+		"loglevel": "DEBUG"
 	},
 
 	"modules": [
