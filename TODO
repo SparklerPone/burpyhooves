@@ -3,6 +3,7 @@ TODO:
 [High Priority - Under active work]
 	- More helper functions for less repeated code in modules.
 	- Make message hooks not use raw events!!!
+	- Make module loading not return arbitrary status info as strings.
 
 [Medium Priority - Next on the list.]
 	- Better command hook system, delegate more to the command handler instead of the module.
