@@ -1,95 +1,83 @@
 import traceback
 
+from collections import defaultdict
 
-class EventHook:
-    def __init__(self, event, callback):
-        self.event = event
+
+class Hook:
+    def __init__(self, tag, callback):
+        self.tag = tag.lower()
         self.callback = callback
-
-
-class CommandHook:
-    def __init__(self, command, callback):
-        self.command = command
-        self.callback = callback
-
+        self.id = id(self)
 
 class HookManager:
     def __init__(self, bot):
         self.bot = bot
-        self.event_hooks = {}
-        self.cmd_hooks = {}
-
+        self.hooks = defaultdict(list)
+        self.waiting_hooks = defaultdict(list)
         self.waiting_to_unhook = []
-        self.waiting_event_hooks = []
-        self.waiting_cmd_hooks = []
 
     def add_hook(self, hook):
-        the_id = id(hook)
-        if isinstance(hook, EventHook):
-            self.waiting_event_hooks.append(hook)
-        else:
-            self.waiting_cmd_hooks.append(hook)
+        self.waiting_hooks[hook.tag].append(hook)
+        return hook.id
 
-        return the_id
-
-    def really_add_hook(self, hook):
+    def force_add_hook(self, hook):
         the_id = self.add_hook(hook)
         self._add_hooks()
         return the_id
 
     def _add_hooks(self):
-        for hook in self.waiting_event_hooks:
-            the_id = id(hook)
-            self.event_hooks[the_id] = hook
+        for event, callbackList in self.waiting_hooks.iteritems():
+            self.hooks[event].extend(callbackList)
 
-        for hook in self.waiting_cmd_hooks:
-            the_id = id(hook)
-            self.cmd_hooks[the_id] = hook
-
-        self.waiting_event_hooks = []
-        self.waiting_cmd_hooks = []
+        self.waiting_hooks = defaultdict(list)
 
     def remove_hook(self, the_id):
         self.waiting_to_unhook.append(the_id)
 
-    def really_remove_hook(self, the_id):
+    def force_remove_hook(self, the_id):
         self.remove_hook(the_id)
         self._remove_hooks()
-    
-    def _remove_hooks(self):
-        for the_id in self.waiting_to_unhook:
-            if the_id in self.event_hooks:
-                del self.event_hooks[the_id]
 
-            if the_id in self.cmd_hooks:
-                del self.cmd_hooks[the_id]
+    def _remove_hooks(self):
+        for _, hooks in self.hooks.iteritems():
+            remove = []
+            for hook in hooks:
+                if hook.id in self.waiting_to_unhook:
+                    self.waiting_to_unhook.remove(hook.id)
+                    remove.append(hook)
+
+            for rem in remove:
+                if rem in hooks:
+                    hooks.remove(rem)
 
         self.waiting_to_unhook = []
 
-    def run_hooks(self, ln):
-        for hook_id in self.event_hooks:
-            hook = self.event_hooks[hook_id]
-            if hook.event.lower() == ln.command.lower():
+    def run_hooks(self, event, event_args):
+        event = event.lower()
+        if event in self.hooks:
+            for hook in self.hooks[event]:
                 try:
-                    hook.callback(self.bot, ln)
+                    hook.callback(self.bot, event_args)
                 except Exception as e:
-                    print("Exception running event hook %s for event '%s'!" % (str(id(hook)), hook.event))
+                    print("Error running hooks for event %s!" % event)
                     traceback.print_exc()
 
+        self._remove_hooks()
+        self._add_hooks()
+
+    def run_irc_hooks(self, ln):
+        self.run_hooks("irc_raw_%s" % ln.command, ln)
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
             splitmsg = message.split(" ")
             if message[0] == self.bot.config["misc"]["command_prefix"]:
                 command = splitmsg[0][1:]
                 args = splitmsg[1:]
-                for hook_id in self.cmd_hooks:
-                    hook = self.cmd_hooks[hook_id]
-                    if hook.command.lower() == command.lower():
-                        try:
-                            hook.callback(self.bot, ln, args)
-                        except Exception as e:
-                            print("Exception running command hook %s for command '%s'!" % (str(id(hook)), hook.command))
-                            traceback.print_exc()
-
-        self._remove_hooks()
-        self._add_hooks()
+                event_args = {
+                    "ln": ln,
+                    "command": command,
+                    "args": args,
+                    "sender": ln.hostmask.nick,
+                    "target": ln.params[0]
+                }
+                self.run_hooks("command_%s" % command.lower(), event_args)

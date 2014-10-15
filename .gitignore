@@ -55,9 +55,16 @@ docs/_build/
 # bot configs
 etc/burpyhooves.json
 etc/permissions.json
+burpyhooves.json
+eval-cn.json
+sex.json
 
 # bot database
 burpyhooves.db
 
 # PyCharm
 .idea/*
+
+# Private modules
+modules/eval.py
+modules/sex.py

@@ -17,7 +17,8 @@ class CoreModule(Module):
         for hook in self.hooks:
             bot.unhook_something(hook)
 
-    def on_command_modload(self, bot, ln, args):
+    def on_command_modload(self, bot, event_args):
+        args = event_args["args"]
         if not bot.check_permission():
             return
 
@@ -31,7 +32,8 @@ class CoreModule(Module):
         else:
             bot.reply("Successfully loaded module %s!" % to_load)
 
-    def on_command_modunload(self, bot, ln, args):
+    def on_command_modunload(self, bot, event_args):
+        args = event_args["args"]
         if not bot.check_permission():
             return
 
@@ -45,7 +47,8 @@ class CoreModule(Module):
         else:
             bot.reply("Successfully unloaded module %s!" % to_unload)
 
-    def on_command_modreload(self, bot, ln, args):
+    def on_command_modreload(self, bot, event_args):
+        args = event_args["args"]
         if not bot.check_permission():
             return
 
@@ -64,14 +67,16 @@ class CoreModule(Module):
         else:
             bot.reply("Successfully reloaded module: %s!" % to_reload)
 
-    def on_command_rehash(self, bot, ln, args):
+    def on_command_rehash(self, bot, event_args):
+        args = event_args["args"]
         if not bot.check_permission():
             return
 
         bot.rehash()
         bot.reply("Successfully rehashed!")
 
-    def on_command_join(self, bot, ln, args):
+    def on_command_join(self, bot, event_args):
+        args = event_args["args"]
         if not bot.check_permission():
             return
 
@@ -81,7 +86,8 @@ class CoreModule(Module):
         bot.join(args[0])
         bot.reply("I have joined %s." % args[0])
 
-    def on_command_part(self, bot, ln, args):
+    def on_command_part(self, bot, event_args):
+        args = event_args["args"]
         if not bot.check_permission():
             return
 

@@ -9,7 +9,7 @@ class TagsModule(Module):
         self.hook_command("tagremove", self.on_command_tagremove)
         self.hook_command("tagclear", self.on_command_tagclear)
 
-        self.hook_event("PRIVMSG", self.on_privmsg)
+        self.hook_numeric("PRIVMSG", self.on_privmsg)
 
         bot.db.execute("CREATE TABLE IF NOT EXISTS tags (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, tag TEXT)")
         bot.db.execute("CREATE INDEX IF NOT EXISTS tags_user_index ON tags (user)")
@@ -26,7 +26,9 @@ class TagsModule(Module):
 
         return user, tags
 
-    def on_command_tagadd(self, bot, ln, args):
+    def on_command_tagadd(self, bot, event_args):
+        args = event_args["args"]
+        ln = event_args["ln"]
         if not bot.check_condition(len(args) > 0, "Please specify a tag to add or a user to add a tag to and a tag to add!"):
             return
 
@@ -41,7 +43,9 @@ class TagsModule(Module):
         tags_str = "that tag" if len(tags) == 1 else "those tags"
         bot.reply("I have added %s for you." % tags_str)
 
-    def on_command_tagremove(self, bot, ln, args):
+    def on_command_tagremove(self, bot, event_args):
+        args = event_args["args"]
+        ln = event_args["ln"]
         if not bot.check_condition(len(args) > 0, "Please specify a tag to remove or a user to remove a tag from and a tag to add!"):
             return
 
@@ -53,7 +57,9 @@ class TagsModule(Module):
         tags_str = "that tag" if len(tags) == 1 else "those tags"
         bot.reply("I have removed %s for you." % tags_str)
 
-    def on_command_tagclear(self, bot, ln, args):
+    def on_command_tagclear(self, bot, event_args):
+        args = event_args["args"]
+        ln = event_args["ln"]
         user = ln.hostmask.nick
         if len(args) > 0:
             user = args[0]

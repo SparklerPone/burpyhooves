@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
+import sys
 import json
 from database import Database
 
 from modules import ModuleManager
 from permissions import Permissions
 from connection import IRCConnection
-from hooks import HookManager, EventHook, CommandHook
+from hooks import HookManager, Hook
 
 
 class BurpyHooves:
@@ -54,7 +55,7 @@ class BurpyHooves:
             ln = self.connection.last_line
             self.state["last_line"] = ln
             self.parse_line(ln)
-            self.hook_manager.run_hooks(ln)
+            self.hook_manager.run_irc_hooks(ln)
 
     def stop(self):
         self.raw("QUIT :Bye!")
@@ -66,10 +67,10 @@ class BurpyHooves:
 
     # Helper functions
     def hook_command(self, cmd, callback):
-        return self.hook_manager.add_hook(CommandHook(cmd, callback))
+        return self.hook_manager.add_hook(Hook("command_%s" % cmd, callback))
 
-    def hook_event(self, event, callback):
-        return self.hook_manager.add_hook(EventHook(event, callback))
+    def hook_numeric(self, numeric, callback):
+        return self.hook_manager.add_hook(Hook("irc_raw_%s" % numeric, callback))
 
     def unhook_something(self, the_id):
         self.hook_manager.remove_hook(the_id)
@@ -132,7 +133,11 @@ class BurpyHooves:
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
 
-bh = BurpyHooves("etc/burpyhooves.json")
+conf = "etc/burpyhooves.json"
+if len(sys.argv) > 1:
+	conf = sys.argv[1]
+print sys.argv[1]
+bh = BurpyHooves(conf)
 try:
     bh.run()
 except KeyboardInterrupt:

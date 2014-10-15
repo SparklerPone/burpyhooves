@@ -1,7 +1,6 @@
 import sys
 import traceback
 
-
 class ModuleManager:
     def __init__(self, bot):
         self.bot = bot
@@ -41,8 +40,9 @@ class ModuleManager:
             self.modules[name] = loaded_module
         except Exception as e:
             sys.path[:] = old_path
+            x = "Error loading module: '%s': %s" % (name, str(e))
             traceback.print_exc()
-            return "Error loading module: '%s': %s" % (name, str(e))
+            return x
 
         sys.path[:] = old_path
         print("Loaded module: %s (%s)" % self._get_info(loaded_module))
@@ -76,6 +76,6 @@ class Module:
         hook = self.bot.hook_command(command, callback)
         self.hooks.append(hook)
 
-    def hook_event(self, event, callback):
-        hook = self.bot.hook_event(event, callback)
+    def hook_numeric(self, event, callback):
+        hook = self.bot.hook_numeric(event, callback)
         self.hooks.append(hook)

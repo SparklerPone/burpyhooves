@@ -11,7 +11,7 @@ class TitleModule(Module):
     description = "Automatically gets titles of URLs posted in channels."
 
     def module_init(self, bot):
-        self.hook_event("PRIVMSG", self.on_privmsg)
+        self.hook_numeric("PRIVMSG", self.on_privmsg)
 
     def on_privmsg(self, bot, ln):
         sender = ln.hostmask.nick
