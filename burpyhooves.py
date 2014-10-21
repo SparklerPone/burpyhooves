@@ -38,6 +38,10 @@ class BurpyHooves:
             self.loop()
 
     def raw(self, line):
+        """
+        Send a raw IRC line to the server.
+        @param line: The raw line to send, without a trailing carriage return or newline.
+        """
         logging.debug("[IRC] <- %s" % line)
         self.connection.write_line(line)
 
@@ -63,25 +67,56 @@ class BurpyHooves:
         self.running = False
 
     def rehash(self):
+        """
+        Rehash (reread and reparse) the bot's configuration file.
+        """
         self.config = json.load(open(self.config_file))
 
     # Helper functions
     def hook_command(self, cmd, callback):
+        """
+        Register a command hook to the bot.
+        @param cmd: Command name to hook.
+        @param callback: Event callback function to call when this command is ran.
+        @return: ID of the new hook. (Used for removal later)
+        """
         return self.hook_manager.add_hook(Hook("command_%s" % cmd, callback))
 
     def hook_numeric(self, numeric, callback):
+        """
+        Register a raw numeric hook to the bot.
+        @param numeric: The raw IRC numeric (or command, such as PRIVMSG) to hook.
+        @param callback: Event callback function to call when this numeric/command is received from the server.
+        @return: ID of the new hook. (Used for removal later)
+        """
         return self.hook_manager.add_hook(Hook("irc_raw_%s" % numeric, callback))
 
     def unhook_something(self, the_id):
+        """
+        Unhook any sort of hook. (Command, numeric, or event.)
+        @param the_id: The ID of the hook to remove, returned by a hook adding function.
+        """
         self.hook_manager.remove_hook(the_id)
 
     def is_admin(self, hostmask=None):
+        """
+        Check if a hostmask is a bot admin.
+        @param hostmask: The hostmask to check.
+        @return: True if admin, False if not.
+        """
         if hostmask is None:
             hostmask = self.state["last_line"].hostmask
 
         return self.perms.check_permission(hostmask, "admin")
 
     def check_condition(self, condition, false_message="Sorry, you may not do that.", reply_func=None):
+        """
+        Check a condition and return it, calling reply_func with false_message if the condition is False.
+        @param condition: The condition to check.
+        @param false_message: The message to be passed to reply_func
+        @param reply_func: The function to call with false_message as argument if condition is False.
+        @return:
+        """
         if reply_func is None:
             reply_func = self.reply
 
@@ -93,6 +128,14 @@ class BurpyHooves:
 
     def check_permission(self, permission="admin", error_reply="Sorry, you do not have permission to do that!",
                          reply_func=None):
+        """
+        Check a bot permission against the hostmask of the last line received, and return whether it matches.
+        Calls reply_func with error_reply as argument if condition is False
+        @param permission: The permission to check.
+        @param error_reply: The message to be passed to reply_func
+        @param reply_func: The function to call with error_reply as argument if condition is False.
+        @return:
+        """
         if reply_func is None:
             reply_func = self.reply_notice
 
@@ -104,22 +147,49 @@ class BurpyHooves:
         self.raw("%s %s :%s" % (verb, target, message))
 
     def privmsg(self, target, message):
+        """
+        Send a PRIVMSG (channel or user message) to a user/channel.
+        @param target: The target to send this message to. (Can be nickname or channel.)
+        @param message: The actual message to send.
+        """
         self._msg_like("PRIVMSG", target, message)
 
     def act(self, target, action):
+        """
+        Send a CTCP ACTION (/me) to a user/channel.
+        @param target: The target to send this ACTION to. (Can be nickname or channel.)
+        @param action: The actual action to send.
+        """
         self.privmsg(target, "\x01ACTION %s\x01" % action)
 
     def notice(self, target, message):
+        """
+        Send a NOTICE to a user/channel.
+        @param target: The user or channel to send this notice to.
+        @param message: The actual notice text.
+        """
         self._msg_like("NOTICE", target, message)
 
     def join(self, channel):
+        """
+        Send a raw channel JOIN message to the server. (Join a channel)
+        @param channel: The channel to join. (Key can be passed in the same argument, separated by a space.)
+        """
         self.raw("JOIN %s" % channel)
 
     def part(self, channel):
+        """
+        Send a raw channel PART to the server. (Leave a channel)
+        @param channel: The channel to leave.
+        """
         self.raw("PART %s" % channel)
 
     # IRC-related stuff that involves state.
     def reply(self, message):
+        """
+        Send a PRIVMSG (channel or user message) to the last channel or user we received a message in.
+        @param message: The reply message to send.
+        """
         ln = self.state["last_line"]
         reply_to = ln.hostmask.nick
 
@@ -129,9 +199,17 @@ class BurpyHooves:
         self.privmsg(reply_to, message)
 
     def reply_act(self, action):
+        """
+        Send a CTCP ACTION (/me) to the last channel or user we received a message in.
+        @param action: The action to send.
+        """
         self.reply("\x01ACTION %s\x01" % action)
 
     def reply_notice(self, message):
+        """
+        Send a NOTICE to the last channel or user we received a message in.
+        @param message: The notice text to send.
+        """
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
 
@@ -144,5 +222,5 @@ bh = BurpyHooves(conf)
 try:
     bh.run()
 except KeyboardInterrupt:
-    print("\nInterrupted, exiting cleanly!")
+    logging.info("Interrupted, exiting cleanly!")
     bh.stop()

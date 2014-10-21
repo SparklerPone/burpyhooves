@@ -19,6 +19,11 @@ class ModuleManager:
         return (name, description)
 
     def load_module(self, name):
+        """
+        Load a module into the bot.
+        @param name: The name of the module, without trailing file extension.
+        @return: Status or error message. (TODO: Set a flag instead and return True or False for success/failure)
+        """
         if name in self.modules:
             logging.error("Module already loaded.")
             return "Error: Module already loaded."
@@ -55,6 +60,12 @@ class ModuleManager:
         return "Loaded module: %s (%s)" % self._get_info(loaded_module)
 
     def unload_module(self, name, bypass_core=False):
+        """
+        Unload a module.
+        @param name: Name of a loaded module.
+        @param bypass_core: True if name is allowed to be "core", else False.
+        @return: Status or error message. (TODO: Set a flag instead and return True or False for success/failure)
+        """
         if name == "core" and not bypass_core:
             logging.error("Error: Cannot unload the core module!")
             return "Error: Cannot unload the core module!"
@@ -83,9 +94,17 @@ class Module:
             bot.unhook_something(hook)
 
     def hook_command(self, command, callback):
+        """
+        Hook a command in the bot.
+        See BurpyHooves.hook_command()
+        """
         hook = self.bot.hook_command(command, callback)
         self.hooks.append(hook)
 
     def hook_numeric(self, event, callback):
+        """
+        Hook a raw IRC numeric in the bot.
+        See BurpyHooves.hook_numeric()
+        """
         hook = self.bot.hook_numeric(event, callback)
         self.hooks.append(hook)
