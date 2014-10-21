@@ -46,7 +46,7 @@ class TagsModule(Module):
     def on_command_tagremove(self, bot, event_args):
         args = event_args["args"]
         ln = event_args["ln"]
-        if not bot.check_condition(len(args) > 0, "Please specify a tag to remove or a user to remove a tag from and a tag to add!"):
+        if not bot.check_condition(len(args) > 0, "Please specify a tag to remove or a user to remove a tag from and a tag to remove!"):
             return
 
         user, tags = self._parse_tags(ln, args)
