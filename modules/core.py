@@ -13,10 +13,6 @@ class CoreModule(Module):
         self.hook_command("join", self.on_command_join)
         self.hook_command("part", self.on_command_part)
 
-    def module_deinit(self, bot):
-        for hook in self.hooks:
-            bot.unhook_something(hook)
-
     def on_command_modload(self, bot, event_args):
         args = event_args["args"]
         if not bot.check_permission():
