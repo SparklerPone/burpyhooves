@@ -27,8 +27,8 @@ class CoreModule(Module):
 
         to_load = args[0]
         result = bot.module_manager.load_module(to_load)
-        if result:
-            bot.reply(result)
+        if not result:
+            bot.reply(bot.module_manager.last_error)
         else:
             bot.reply("Successfully loaded module %s!" % to_load)
 
@@ -42,8 +42,8 @@ class CoreModule(Module):
 
         to_unload = args[0]
         result = bot.module_manager.unload_module(to_unload)
-        if result:
-            bot.reply(result)
+        if not result:
+            bot.reply(bot.module_manager.last_error)
         else:
             bot.reply("Successfully unloaded module %s!" % to_unload)
 
@@ -57,13 +57,13 @@ class CoreModule(Module):
 
         to_reload = args[0]
         result = bot.module_manager.unload_module(to_reload, True)
-        if result:
-            bot.reply(result)
+        if not result:
+            bot.reply(bot.module_manager.last_error)
             return
 
         result = bot.module_manager.load_module(to_reload)
-        if result:
-            bot.reply(result)
+        if not result:
+            bot.reply(bot.module_manager.last_error)
         else:
             bot.reply("Successfully reloaded module: %s!" % to_reload)
 

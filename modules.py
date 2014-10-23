@@ -2,21 +2,28 @@ import sys
 import logging
 import traceback
 
+class ModuleException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return "ModuleException(%s)" % self.message
+
 class ModuleManager:
     def __init__(self, bot):
         self.bot = bot
         self.modules = {}
+        self.last_error = None
 
-    def _get_info(self, module):
-        name = "Unknown"
-        description = "Unknown"
+    def on_error(self, message):
+        logging.error(message)
+        self.last_error = message
 
-        if hasattr(module, "name"):
-            name = module.name
-        if hasattr(module, "description"):
-            description = module.description
-
-        return (name, description)
+    def raise_for_error(self):
+        if self.last_error:
+            err = self.last_error
+            self.last_error = None
+            raise ModuleException(err)
 
     def load_module(self, name):
         """
@@ -25,8 +32,8 @@ class ModuleManager:
         @return: Status or error message. (TODO: Set a flag instead and return True or False for success/failure)
         """
         if name in self.modules:
-            logging.error("Module already loaded.")
-            return "Error: Module already loaded."
+            self.on_error("Module already loaded!")
+            return False
 
         old_path = list(sys.path)
         sys.path.insert(0, "./modules")
@@ -35,8 +42,8 @@ class ModuleManager:
             loaded_module = getattr(imported, [x for x in dir(imported) if "__" not in x and "Module" in x and len(x) > len("Module")][0])()
             if not isinstance(loaded_module, Module):
                 sys.path[:] = old_path
-                logging.error("Error loading module '%s': Not a Module (forgetting something?)" % name)
-                return "Error loading module '%s': Not a Module (forgetting something?)" % name
+                self.on_error("Error loading module '%s': Not a Module (forgetting something?)" % name)
+                return False
 
             setattr(loaded_module, "bot", self.bot)
             loaded_module._module_init(self.bot)
@@ -44,20 +51,20 @@ class ModuleManager:
                 result = loaded_module.module_init(self.bot)
                 if result:
                     sys.path[:] = old_path
-                    logging.error("Error loading module '%s': %s" % (name, result))
-                    return "Error loading module '%s': %s" % (name, result)
+                    self.on_error("Error loading module '%s': %s" % (name, result))
+                    return False
 
             self.modules[name] = loaded_module
         except Exception as e:
             sys.path[:] = old_path
             x = "Error loading module: '%s': %s" % (name, str(e))
-            #traceback.print_exc()
             logging.exception(x, exc_info=sys.exc_info())
-            return x
+            self.on_error(x)
+            return False
 
         sys.path[:] = old_path
-        logging.info("Loaded module: %s (%s)" % self._get_info(loaded_module))
-        return "Loaded module: %s (%s)" % self._get_info(loaded_module)
+        logging.info("Loaded module: %s" % str(loaded_module))
+        return True
 
     def unload_module(self, name, bypass_core=False):
         """
@@ -67,8 +74,8 @@ class ModuleManager:
         @return: Status or error message. (TODO: Set a flag instead and return True or False for success/failure)
         """
         if name == "core" and not bypass_core:
-            logging.error("Error: Cannot unload the core module!")
-            return "Error: Cannot unload the core module!"
+            self.on_error("Error: Cannot unload the core module!")
+            return False
 
         if name in self.modules:
             module = self.modules[name]
@@ -78,14 +85,23 @@ class ModuleManager:
             del self.modules[name]
             del sys.modules[name]
         else:
-            logging.error("Error: Module not loaded")
-            return "Error: Module nod loaded."
+            self.on_error("Error: Module not loaded")
+            return False
 
-        logging.info("Unloaded module: %s (%s)" % self._get_info(module))
-        return "Unloaded module: %s (%s)" % self._get_info(module)
+        logging.info("Unloaded module: %s" % str(module))
+        return True
 
 
 class Module:
+    name = "Unknown"
+    description = "Unknown"
+
+    def __init__(self):
+        """
+        Unused constructor to make IDEs happy.
+        """
+        self.bot = None
+
     def _module_init(self, bot):
         self.hooks = []
 
@@ -108,3 +124,6 @@ class Module:
         """
         hook = self.bot.hook_numeric(event, callback)
         self.hooks.append(hook)
+
+    def __str__(self):
+        return "%s (%s)" % (self.name, self.description)
