@@ -68,7 +68,6 @@ class CoreModule(Module):
             bot.reply("Successfully reloaded module: %s!" % to_reload)
 
     def on_command_rehash(self, bot, event_args):
-        args = event_args["args"]
         if not bot.check_permission():
             return
 
