@@ -69,6 +69,7 @@ class HookManager:
 
     def run_irc_hooks(self, ln):
         self.run_hooks("irc_raw_%s" % ln.command, ln)
+        self.run_hooks("irc_raw", ln)
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
             splitmsg = message.split(" ")

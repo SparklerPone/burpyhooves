@@ -8,6 +8,14 @@ class Permissions:
         self.permissions = json.load(open("etc/permissions.json"))["permissions"]
 
     def check_permission(self, hostmask, permission="admin"):
+        """
+        Check a permission on a hostmask, according to the loaded permissions file.
+        Standard wildcards (* and ?) are supported because we use the fnmatch module here.
+
+        @param hostmask: The hostmask to check the permission on.
+        @param permission: The permission to check.
+        @return: True if the hostmask has the permission, False otherwise.
+        """
         for k in self.permissions:
             user = self.permissions[k]
             matched_nick = False
@@ -31,7 +39,7 @@ class Permissions:
             if matched_nick and matched_ident and matched_host:
                 return True
 
-        return False # Nothing matched fully.
+        return False  # Nothing matched fully.
 
     def rehash(self):
         self.permissions = json.load(open("permissions.json"))
