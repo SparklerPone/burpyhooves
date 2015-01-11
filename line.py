@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2013 Andrew Wilcox.  All rights reserved.
-# This file is part of glorircd.  See the LICENSE.md file for copyright info.
+# Developed by Andrew Wilcox and contributors, glorircd
+# This file is licensed under the NCSA license - http://opensource.org/licenses/NCSA
 
 from itertools import takewhile
 from functools import reduce
