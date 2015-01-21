@@ -229,7 +229,6 @@ class BurpyHooves:
         for cm, cb in hooks.iteritems():
             self.hook_numeric(cm, cb)
 
-
     def on_raw_353(self, bot, ln):
         chan = ln.params[2]
         names = ln.params[-1].split(" ")
