@@ -3,7 +3,6 @@ import select
 import socket
 import threading
 
-from line import Line
 from linebuffer import LineBuffer
 
 
