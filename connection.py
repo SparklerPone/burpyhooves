@@ -4,6 +4,7 @@ import socket
 import threading
 
 from line import Line
+from linebuffer import LineBuffer
 
 
 class IRCConnection:
@@ -12,10 +13,10 @@ class IRCConnection:
         self.port = port
         self.ssl = use_ssl
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.buffer = LineBuffer()
         if self.ssl:
             self.socket = ssl.wrap_socket(self.socket)
 
-        self.last_line = None
         self.lock = threading.Lock()
 
     def connect(self):
@@ -24,27 +25,11 @@ class IRCConnection:
     def disconnect(self):
         self.socket.close()
 
-    def _read_line(self, the_socket):
-        line = ""
-        while 1:
-            c = the_socket.recv(1)
-            if c == "\n":
-                return line.strip()
-            if c is None:
-                return None
-            line += c
-
     def loop(self):
-        self.last_line = None
         readable, writable, errored = select.select([self.socket], [], [], 0.5)
-        if readable:
-            sock = readable[0]
-            raw_line = self._read_line(sock)
-            line = Line.parse(raw_line)
-            self.last_line = line
 
-    def has_line(self):
-        return self.last_line is not None
+        if readable:
+            self.buffer.append(self.socket.recv(4096))
 
     def write_line(self, line):
         with self.lock:  # We use a lock here because some modules might call reply() from a new thread, which might end up breaking here.

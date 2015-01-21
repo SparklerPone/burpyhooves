@@ -2,8 +2,9 @@
 import sys
 import json
 import logging
-from database import Database
 
+from line import Line
+from database import Database
 from modules import ModuleManager
 from collections import defaultdict
 from permissions import Permissions
@@ -58,8 +59,8 @@ class BurpyHooves:
 
     def loop(self):
         self.connection.loop()
-        if self.connection.has_line():
-            ln = self.connection.last_line
+        for line in self.connection.buffer:
+            ln = Line.parse(line)
             self.state["last_line"] = ln
             self.parse_line(ln)
             self.hook_manager.run_irc_hooks(ln)
