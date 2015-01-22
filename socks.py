@@ -382,7 +382,6 @@ class socksocket(socket.socket):
         if (len(destpair) < 2):
             raise Exception("too short")
         if (type(destpair[0]) != type('')):
-            print str(type(destpair[0]))
             raise Exception("wrong str")
         if (type(destpair[1]) != int):
             raise Exception("wrong int")
