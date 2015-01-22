@@ -9,12 +9,18 @@
 		"address": "irc.canternet.org",
 		"port": 6697,
 		"ssl": true,
-		"channels": ["#test"]
+		"channels": ["#test"],
+		"proxy": "none"
 	},
+
+	"proxies": {
+        "tor": "socks5://127.0.0.1:9050"
+    },
 
 	"misc": {
 		"command_prefix": "!",
-		"loglevel": "DEBUG"
+		"loglevel": "DEBUG",
+		"http_proxy": "none"
 	},
 
 	"modules": [

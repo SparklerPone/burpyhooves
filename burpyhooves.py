@@ -21,7 +21,7 @@ class BurpyHooves:
         self.module_manager = ModuleManager(self)
         self.hook_manager = HookManager(self)
         self.perms = Permissions(self)
-        self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"])
+        self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"], self.config["proxies"].get(self.net.get("proxy", "none"), None))
         self.running = True
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
         self.db = Database("etc/burpyhooves.db")
@@ -39,7 +39,8 @@ class BurpyHooves:
             self.module_manager.load_module(module)
 
         while self.running:
-            self.loop()
+            if not self.loop():
+                self.stop()
 
     def raw(self, line):
         """
@@ -58,12 +59,16 @@ class BurpyHooves:
                 self.join(channel)
 
     def loop(self):
-        self.connection.loop()
+        if not self.connection.loop():
+            return False
+
         for line in self.connection.buffer:
             ln = Line.parse(line)
             self.state["last_line"] = ln
             self.parse_line(ln)
             self.hook_manager.run_irc_hooks(ln)
+
+        return True
 
     def stop(self):
         self.raw("QUIT :Bye!")
@@ -265,6 +270,7 @@ class BurpyHooves:
             if old in names:
                 names.remove(old)
                 names.append(new)
+
 
 conf = "etc/burpyhooves.json"
 if len(sys.argv) > 1:
