@@ -3,7 +3,6 @@ BurpyHooves TODO:
 [High Priority - Under active work]
 	- More helper functions for less repeated code in modules.
 	- Make message hooks not use raw events!!!
-	- SOCKS proxy support for IRC
 	- SASL auth support.
 
 [Medium Priority - Next on the list.]
