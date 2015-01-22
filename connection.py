@@ -28,7 +28,7 @@ class IRCConnection:
         self.socket.close()
 
     def loop(self):
-        readable, writable, errored = select.select([self.socket], [], [], 0.5)
+        readable, writable, errored = select.select([self.socket], [], [], 0.1)
 
         if readable:
             data = self.socket.recv(4096)
