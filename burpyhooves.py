@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import sys
 import json
+import base64
 import logging
 
 from line import Line
@@ -32,6 +33,7 @@ class BurpyHooves:
 
     def run(self):
         self.connection.connect()
+        self.raw("CAP REQ :sasl")
         self.raw("NICK %s" % self.me["nicks"][0])  # Nicks thing is a temp hack
         self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
 
@@ -57,6 +59,17 @@ class BurpyHooves:
         elif ln.command == "376":
             for channel in self.net["channels"]:
                 self.join(channel)
+        elif ln.command == "CAP":
+            if ln.params[1] == "ACK" and ln.params[-1] == "sasl" and self.net["sasl"]["use"]:
+                self.raw("AUTHENTICATE PLAIN")
+        elif ln.command == "AUTHENTICATE":
+            magic = base64.b64encode("%s\x00%s\x00%s" % (self.net["sasl"]["username"], self.net["sasl"]["username"], self.net["sasl"]["password"]))
+            self.raw("AUTHENTICATE %s" % magic)
+        elif ln.command == "903":
+            self.raw("CAP END")
+        elif ln.command == "904":
+            logging.warning("SASL authentication failed, continuing login anyways...")
+            self.raw("CAP END")
 
     def loop(self):
         if not self.connection.loop():

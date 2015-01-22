@@ -10,7 +10,13 @@
 		"port": 6697,
 		"ssl": true,
 		"channels": ["#test"],
-		"proxy": "none"
+		"proxy": "none",
+		"sasl": {
+            "use": false,
+            "method": "plain",
+            "username": "NotBurpyHooves",
+            "password": "s3cur3p4ss"
+        }
 	},
 
 	"proxies": {
