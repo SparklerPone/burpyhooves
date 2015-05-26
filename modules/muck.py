@@ -42,22 +42,23 @@ class MuckModule(Module):
 	self.hook_numeric("330", self.handle_330)
 
     def command_help(self, bot, event_args):
-	if len(event_args["args"]) == 0:
-	    bot.reply("My commands are .help .claim .hoof .edit .delplayer .delchar. Use .help <command> for more info on each one.")
+	args = event_args["args"]
+	if len(args) == 0:
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one.".format(bot.config["misc"]["command_prefix"]))
 	    return
-	if event_args["args"][0] == "claim":
-	    bot.reply(".claim <charactername>: Claims a character as your own. No spaces allowed")
-	elif event_args["args"][0] == "hoof":
-	    bot.reply(".hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See .help attributes")
-	elif event_args["args"][0] == "edit":
-	    bot.reply(".edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See .help attributes")
-	elif event_args["args"][0] == "delplayer":
-	    bot.reply(".delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only.")
-	elif event_args["args"][0] == "delchar":
-	    bot.reply(".delchar <charname>: Deletes <character> from the database. Admin only.")
-	elif event_args["args"][0] == "help":
-	    bot.reply(".help [command]: Tells you how to use the bot.")
-	elif event_args["args"][0] == "attributes":
+	if args[0] == "claim":
+	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(bot.config["misc"]["command_prefix"])
+	elif args[0] == "hoof":
+	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See .help attributes".format(bot.config["misc"]["command_prefix"])
+	elif args[0] == "edit":
+	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See .help attributes".format(bot.config["misc"]["command_prefix"])
+	elif args[0] == "delplayer":
+	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only.".format(bot.config["misc"]["command_prefix"])
+	elif args[0] == "delchar":
+	    bot.reply("{0}delchar <charname>: Deletes <character> from the database. You must own the character or be a bot admin.".format(bot.config["misc"]["command_prefix"])
+	elif args[0] == "help":
+	    bot.reply("{0}help [command]: Tells you how to use the bot.".format(bot.config["misc"]["command_prefix"])
+	elif args[0] == "attributes":
 	    bot.reply("List of valid attributes: %s" % str.join(", ",self.attributes))
 	return
 
