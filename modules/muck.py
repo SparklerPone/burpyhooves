@@ -66,41 +66,51 @@ class MuckModule(Module):
 	return
 
     def command_delchar(self, bot, event_args):
-        bot.reply("Admin command to delete a character from the db, NYI")
-	
-        return
+	name = event_args["args"][0]
+	if not self.check_char_exists(name):
+	    bot.reply("Character %s does not exist." % name)
+	    return
+	sender = event_args["sender"]
+	if not bot.check_permission("admin", ""):
+	    #not an admin, check if they own the character
+	    queue_data = [event_args, 0]
+            self.message_queue.append(queue_data)
+	    bot.raw("WHOIS " + sender)
+	    return
+	#else admin, do it anyways
+	self.do_delchar(bot, event_args, "", True)
+	return
 
     def command_hoof(self, bot, event_args):
 	#displays data about a character
-	if len(event_args["args"]) < 1:
+	args = event_args["args"]
+	if len(args) < 1:
 	    bot.reply("Not enough parameters. .hoof <charname> [attribute1] [attribute2] [...]")
 	    return
 	#check for character existing
-	name = str(event_args["args"][0])
-	c = self.dbconn.cursor()
-	c.execute("SELECT char_name FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
-	row = c.fetchone()
-
-	if row is None:
+	name = str(args[0])
+	if not self.check_char_exists(name):
 	    bot.reply("Character %s does not exist." % name)
 	    return
-	if len(event_args["args"]) == 1 or len(event_args["args"]) > 3:
+	if len(args) == 1 or len(args) > 3:
 	    bot.reply("All data will be sent in query")	
-	    if len(event_args["args"]) == 1:
+	    if len(args) == 1:
 		#all data
 		attribute = self.attributes
-	if len(event_args["args"]) > 1:
-	    attribute = event_args["args"][1:]
+	if len(args) > 1:
+	    attribute = args[1:]
 	    attribute = self.parse_attributes(list(set(attribute)))
 	    if len(attribute) == 0:
 		bot.reply("No valid attributes given, aborting")
 		return
 
+	#TODO: Clean up this junk
 	sqlparams = self.parse_sqlattributes(attribute)
 	sqlstring = ("SELECT %s FROM characters WHERE char_name = ? COLLATE NOCASE;" % self.sqllist_to_string(sqlparams))
+	c = self.dbconn.cursor()
 	c.execute(sqlstring, (name,))
 	row = c.fetchone()
-	if len(event_args["args"]) > 1 and len(event_args["args"]) < 4:
+	if len(args) > 1 and len(args) < 4:
 	#send data to source
 	    i = 0
 	    for message in row:
@@ -115,7 +125,6 @@ class MuckModule(Module):
 		bot.privmsg(event_args["sender"], "%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
 	    i += 1
 
-
     def command_claim(self, bot, event_args):
 	queue_data = [event_args, 0]
 	self.message_queue.append(queue_data)
@@ -123,21 +132,19 @@ class MuckModule(Module):
 
     def command_edit(self, bot, event_args):
 	#verify correct edit command before doing expensive whois
-	if len(event_args["args"]) < 3:
+	args = event_args["args"]
+	if len(args) < 3:
 	    bot.reply("Not enough parameters. .edit <charname> <attribute> <value>")
 	    return
-	name = str(event_args["args"][0]).lower()
-	c = self.dbconn.cursor()
-	c.execute("SELECT char_name FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
-	row = c.fetchone()
-	if row is None:
+	name = str(args[0])
+	if not self.check_char_exists(name):
 	    bot.reply("%s does not exist as a character." % name)
 	    return
-	if len(str.join("",event_args["args"][2:])) > 200:
+	if len(str.join("",args[2:])) > 200:
 	    bot.reply("Maximum length for a value is 200 characters")
 	    return
 
-	attribute = str(event_args["args"][1].lower())
+	attribute = str(args[1].lower())
 
 	if attribute not in self.attributes:
 	    bot.reply("%s is not a valid attribute." % attribute)
@@ -152,6 +159,7 @@ class MuckModule(Module):
 	bot.raw("WHOIS " + event_args["sender"])
 
     def handle_330(self, bot, event_args):
+	#Do stuff on a whois return with a nickserv account
 	accountname = event_args.params[2]
 	nick = event_args.params[1]
 	for message in self.message_queue:
@@ -159,10 +167,13 @@ class MuckModule(Module):
                 message[1] += 1
 	        continue
 	    else:
-		if(message[0]["command"] == "claim"):
-		    self.do_claim(bot, message, accountname)
-		elif(message[0]["command"] == "edit"):
-		    self.do_edit(bot, message, accountname)
+		command = message[0]["command"]
+		if(command == "claim"):
+		    self.do_claim(bot, message[0], accountname)
+		elif(command == "edit"):
+		    self.do_edit(bot, message[0], accountname)
+		elif(command == "delchar"):
+		    self.do_delchar(bot, message[0], accountname)
 		break
 	self.message_queue.remove(message)
 	self.remove_stale()
@@ -171,44 +182,83 @@ class MuckModule(Module):
 	#removes a single stale entry per run
 	for message in self.message_queue:
 	    if message[1] > 5:
+		#Exceptions, but removes the one stale message
+		#Something better?
 	        self.message_queue.remove(message)
+
+    def check_char_exists(self, name):
+	#checks if the given character exists in the database
+	c = self.dbconn.cursor()
+	c.execute("SELECT * FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	if c.fetchone() == None:
+	    return False
+	return True
+
+    def check_ownership(self, name, accountname):
+	#checks if accountname owns the character "name"
+	c = self.dbconn.cursor()
+	c.execute("SELECT nickserv_account FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	if c.fetchone() == accountname:
+	    return True
+	return False
+
+    def get_ownership(self, name):
+	#gets account name of character's owner, returns "" on failure
+	c = self.dbconn.cursor()
+	c.execute("SELECT nickserv_account FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	return c.fetchone()
+
+    def do_delchar(self, bot, event_args, accountname, admin=False):
+	#verify user if not an admin and delete character
+	args = event_args["args"]
+	name = args[0]
+	
+	if not admin:
+	    #verify account
+	    if not self.check_ownership(name, accountname):
+		self.send_message(bot, event_args["target"], event_args["sender"], "You do not have permission to delete that character.")
+	    return
+	#delete
+	c = self.dbconn.cursor()
+	c.execute("DELETE FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	self.dbconn.commit()
+	self.send_message(bot, event_args["target"], event_args["sender"], "Successfuly deleted character %s" % name)
 
     def do_claim(self, bot, message, accountname):
 	#claims a character and links it to their nickserv account
-	name = str(message[0]["args"][0])
+	name = str(message["args"][0])
 	c = self.dbconn.cursor()
 	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
 	row = c.fetchone()
 	if row is not None:
-	    self.send_message(bot, message[0]["target"], message[0]["sender"], "%s has already been claimed by %s." % (row[0], row[1]))
+	    self.send_message(bot, message["target"], message["sender"], "%s has already been claimed by %s." % (row[0], row[1]))
 	    return
 	values = (str(name), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", str(accountname))
 	c.execute("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (values))
 	self.dbconn.commit()
-	print(message[0]["sender"] + message[0]["args"][0] + message[0]["target"])
-	self.send_message(bot, message[0]["target"], message[0]["sender"], "%s has claimed the character %s" % (message[0]["sender"], message[0]["args"][0]))
+	print(message["sender"] + message["args"][0] + message["target"])
+	self.send_message(bot, message["target"], message["sender"], "%s has claimed the character %s" % (message["sender"], message["args"][0]))
 	return
 
-    def do_edit(self, bot, message, accountname):
+    def do_edit(self, bot, event_args, accountname):
 	#checks if a person has permission to edit a character then edits it
+	args = event_args["args"]
 	c = self.dbconn.cursor()
-	name = str(message[0]["args"][0]).lower()
-	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
-	row = c.fetchone()
-	if accountname != row[1]:
-	    self.send_message(bot, message[0]["target"], message[0]["sender"],"You do not have permission to edit this character. It is owned by %s" % row[1])
+	name = str(args[0])
+	if self.check_ownership(name, accountname):
+	    self.send_message(bot, event_args["target"], event_args["sender"],"You do not have permission to edit this character.")
 	    return
-	data = str.join(" ",message[0]["args"][2:])
+	data = str.join(" ",args[2:])
 	i = 0
 	sqlstring = None
 	for attribute in self.attributes:
-	    if attribute == str(message[0]["args"][1]):
+	    if attribute == str(args[1]):
 		sqlstring = self.generate_sql_update(i)
 		break
 	    i += 1
 	c.execute(sqlstring, (data,name))
 	self.dbconn.commit()
-	self.send_message(bot, message[0]["target"], message[0]["sender"], "Successfully updated %s to %s" % (str(message[0]["args"][1]),data))
+	self.send_message(bot, event_args["target"], event_args["sender"], "Successfully updated %s to %s" % (str(args[1]),data))
 	return
 
     def generate_sql_update(self, i):
