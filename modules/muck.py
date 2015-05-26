@@ -67,6 +67,7 @@ class MuckModule(Module):
 
     def command_delchar(self, bot, event_args):
         bot.reply("Admin command to delete a character from the db, NYI")
+	
         return
 
     def command_hoof(self, bot, event_args):
@@ -77,7 +78,7 @@ class MuckModule(Module):
 	#check for character existing
 	name = str(event_args["args"][0])
 	c = self.dbconn.cursor()
-	c.execute("SELECT char_name FROM characters WHERE char_name=?;", (name,))
+	c.execute("SELECT char_name FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
 	row = c.fetchone()
 
 	if row is None:
@@ -96,21 +97,22 @@ class MuckModule(Module):
 		return
 
 	sqlparams = self.parse_sqlattributes(attribute)
-	sqlstring = ("SELECT %s FROM characters WHERE char_name = ?;" % self.sqllist_to_string(sqlparams))
+	sqlstring = ("SELECT %s FROM characters WHERE char_name = ? COLLATE NOCASE;" % self.sqllist_to_string(sqlparams))
 	c.execute(sqlstring, (name,))
 	row = c.fetchone()
-	row = filter(None, row)
 	if len(event_args["args"]) > 1 and len(event_args["args"]) < 4:
 	#send data to source
 	    i = 0
 	    for message in row:
-		bot.reply("%s: %s" % (self.sql_to_attr(sqlparams[i]),row[i]))
+		if message != "":
+		    bot.reply("%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
 		i += 1
 	    return
 	#else data in query
 	i = 0
 	for message in row:
-	    bot.privmsg(event_args["sender"], "%s: %s" % (self.sql_to_attr(sqlparams[i]),row[i]))
+	    if message != "":
+		bot.privmsg(event_args["sender"], "%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
 	    i += 1
 
 
@@ -126,7 +128,7 @@ class MuckModule(Module):
 	    return
 	name = str(event_args["args"][0]).lower()
 	c = self.dbconn.cursor()
-	c.execute("SELECT char_name FROM characters WHERE char_name=?;", (name,))
+	c.execute("SELECT char_name FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
 	row = c.fetchone()
 	if row is None:
 	    bot.reply("%s does not exist as a character." % name)
@@ -175,12 +177,12 @@ class MuckModule(Module):
 	#claims a character and links it to their nickserv account
 	name = str(message[0]["args"][0])
 	c = self.dbconn.cursor()
-	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=?;", (name,))
+	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
 	row = c.fetchone()
 	if row is not None:
 	    self.send_message(bot, message[0]["target"], message[0]["sender"], "%s has already been claimed by %s." % (row[0], row[1]))
 	    return
-	values = (str(name), "", "", "", 0, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", str(accountname))
+	values = (str(name), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", str(accountname))
 	c.execute("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (values))
 	self.dbconn.commit()
 	print(message[0]["sender"] + message[0]["args"][0] + message[0]["target"])
@@ -190,13 +192,13 @@ class MuckModule(Module):
     def do_edit(self, bot, message, accountname):
 	#checks if a person has permission to edit a character then edits it
 	c = self.dbconn.cursor()
-	name = str(message[0]["args"][0])
-	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=?;", (name,))
+	name = str(message[0]["args"][0]).lower()
+	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
 	row = c.fetchone()
 	if accountname != row[1]:
 	    self.send_message(bot, message[0]["target"], message[0]["sender"],"You do not have permission to edit this character. It is owned by %s" % row[1])
 	    return
-	data = str(message[0]["args"][2])
+	data = str.join(" ",message[0]["args"][2:])
 	i = 0
 	sqlstring = None
 	for attribute in self.attributes:
@@ -210,7 +212,7 @@ class MuckModule(Module):
 	return
 
     def generate_sql_update(self, i):
-	return ("UPDATE characters SET %s = ? WHERE char_name = ?" % self.sqlattributes[i])
+	return ("UPDATE characters SET %s = ? WHERE char_name = ? COLLATE NOCASE;" % self.sqlattributes[i])
 
     def parse_attributes(self, message):
 	#return a list of all the valid attributes
