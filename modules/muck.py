@@ -49,11 +49,11 @@ class MuckModule(Module):
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(bot.config["misc"]["command_prefix"]))
 	elif args[0] == "hoof":
-	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See .help attributes".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See {0}help attributes".format(bot.config["misc"]["command_prefix"]))
 	elif args[0] == "edit":
-	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See .help attributes".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See {0}help attributes".format(bot.config["misc"]["command_prefix"]))
 	elif args[0] == "delplayer":
-	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only.".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only. Not yet implemented.".format(bot.config["misc"]["command_prefix"]))
 	elif args[0] == "delchar":
 	    bot.reply("{0}delchar <charname>: Deletes <character> from the database. You must own the character or be a bot admin.".format(bot.config["misc"]["command_prefix"]))
 	elif args[0] == "help":
