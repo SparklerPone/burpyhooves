@@ -39,27 +39,31 @@ class MuckModule(Module):
 	self.hook_command("edit", self.command_edit)
 	self.hook_command("delplayer", self.command_delplayer)
 	self.hook_command("delchar", self.command_delchar)
+	self.hook_command("listchars", self.command_listchars)
 	self.hook_numeric("330", self.handle_330)
 
     def command_help(self, bot, event_args):
-	args = event_args["args"]
+	args = event_args["args"]a
+	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one.".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one.".format(prefix))
 	    return
 	if args[0] == "claim":
-	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
 	elif args[0] == "hoof":
-	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See {0}help attributes".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See {0}help attributes".format(prefix))
 	elif args[0] == "edit":
-	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See {0}help attributes".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See {0}help attributes".format(prefix))
 	elif args[0] == "delplayer":
-	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only. Not yet implemented.".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only. Not yet implemented.".format(prefix))
 	elif args[0] == "delchar":
-	    bot.reply("{0}delchar <charname>: Deletes <character> from the database. You must own the character or be a bot admin.".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}delchar <charname>: Deletes <character> from the database. You must own the character or be a bot admin.".format(prefix))
 	elif args[0] == "help":
-	    bot.reply("{0}help [command]: Tells you how to use the bot.".format(bot.config["misc"]["command_prefix"]))
+	    bot.reply("{0}help [command]: Tells you how to use the bot.".format(prefix))
 	elif args[0] == "attributes":
 	    bot.reply("List of valid attributes: %s" % str.join(", ",self.attributes))
+	elif args[0] == "listchars":
+	    bot.reply("{0}listchars [playername]: Lists all of your characters or all of another player's characters.".format(prefix))
 	return
 
     def command_delplayer(self, bot, event_args):
@@ -138,6 +142,17 @@ class MuckModule(Module):
 	self.message_queue.append(queue_data)
 	bot.raw("WHOIS " + event_args["sender"])
 
+    def command_listchars(self, bot, event_args):
+	args = event_args["args"]
+	if len(args) > 0:
+	    #specific user
+	    self.do_listchars(bot, event_args, args[0])
+	else:
+	    #self
+	    queue_data = [event_args, 0]
+	    self.message_queue.append(queue_data)
+	    bot.raw("WHOIS " + event_args["sender"])
+
     def command_edit(self, bot, event_args):
 	#verify correct edit command before doing expensive whois
 	args = event_args["args"]
@@ -182,6 +197,8 @@ class MuckModule(Module):
 		    self.do_edit(bot, message[0], accountname)
 		elif(command == "delchar"):
 		    self.do_delchar(bot, message[0], accountname)
+		elif(command == "listchars"):
+		    self.do_listchars(bot, message[0], accountname)
 		break
 	self.message_queue.remove(message)
 	self.remove_stale()
@@ -215,6 +232,12 @@ class MuckModule(Module):
 	c = self.dbconn.cursor()
 	c.execute("SELECT nickserv_account FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
 	return c.fetchone()
+
+    def get_chars(self, accountname):
+	#returns a list of all characters owned by a user
+	c = self.dbconn.cursor()
+	c.execute("SELECT char_name FROM characters WHERE nickserv_account = ? COLLATE NOCASE;", (accountname,))
+	return [x[0] for x in c.fetchall()]
 
     def do_delchar(self, bot, event_args, accountname, admin=False):
 	#verify user if not an admin and delete character
@@ -268,6 +291,18 @@ class MuckModule(Module):
 	self.dbconn.commit()
 	self.send_message(bot, event_args["target"], event_args["sender"], "Successfully updated %s to %s" % (str(args[1]),data))
 	return
+
+    def do_listchars(self, bot, event_args, accountname):
+	characters = self.get_chars(accountname)
+	if characters:
+	    print(characters)
+	    print(str.join(", ",characters))
+	#they have at least one
+	    self.send_message(bot, event_args["target"], event_args["sender"], "{0} has the following characters: {1}".format(str(accountname), str.join(",", characters)))
+	else:
+	    self.send_message(bot, event_args["target"], event_args["sender"], "%s has no characters." % accountname)
+	return
+	
 
     def generate_sql_update(self, i):
 	return ("UPDATE characters SET %s = ? WHERE char_name = ? COLLATE NOCASE;" % self.sqlattributes[i])
