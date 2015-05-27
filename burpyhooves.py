@@ -33,7 +33,7 @@ class BurpyHooves:
 
     def run(self):
         self.connection.connect()
-        self.raw("CAP REQ :sasl")
+        #self.raw("CAP REQ :sasl")
         self.raw("NICK %s" % self.me["nicks"][0])  # Nicks thing is a temp hack
         self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
 
@@ -70,6 +70,8 @@ class BurpyHooves:
         elif ln.command == "904":
             logging.warning("SASL authentication failed, continuing login anyways...")
             self.raw("CAP END")
+	elif ln.command == "001":
+	    self.raw("MODE %s +B" % self.me["nicks"][0])
 
     def loop(self):
         if not self.connection.loop():
