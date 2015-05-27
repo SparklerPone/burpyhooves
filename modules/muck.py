@@ -160,14 +160,14 @@ class MuckModule(Module):
 	    i += 1
 
     def command_claim(self, bot, event_args):
-	if len(event_args["args"] == 0):
+	if len(event_args["args"]) == 0:
 	    bot.reply("You must enter a character name.")
 	    return
 	args = event_args["args"]
 	if len(args[0]) > 32:
 	    bot.reply("Character name is too long. Max length is 32 characters.")
 	    return
-	if self.character_exists(args[0]):
+	if self.check_char_exists(args[0]):
 	    bot.reply("%s is already claimed." % args[0])
 	    return
 	queue_data = [event_args, 0]
