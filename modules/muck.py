@@ -43,7 +43,7 @@ class MuckModule(Module):
 	self.hook_numeric("330", self.handle_330)
 
     def command_help(self, bot, event_args):
-	args = event_args["args"]a
+	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
 	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one.".format(prefix))
@@ -131,6 +131,9 @@ class MuckModule(Module):
 	    i += 1
 
     def command_claim(self, bot, event_args):
+	if len(event_args["args"] == 0):
+	    bot.reply("You must enter a character name.")
+	    return
 	args = event_args["args"]
 	if len(args[0]) > 32:
 	    bot.reply("Character name is too long. Max length is 32 characters.")
@@ -223,7 +226,7 @@ class MuckModule(Module):
 	#checks if accountname owns the character "name"
 	c = self.dbconn.cursor()
 	c.execute("SELECT nickserv_account FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
-	if c.fetchone() == accountname:
+	if c.fetchone()[0] == accountname:
 	    return True
 	return False
 
@@ -276,7 +279,7 @@ class MuckModule(Module):
 	args = event_args["args"]
 	c = self.dbconn.cursor()
 	name = str(args[0])
-	if self.check_ownership(name, accountname):
+	if not self.check_ownership(name, accountname):
 	    self.send_message(bot, event_args["target"], event_args["sender"],"You do not have permission to edit this character.")
 	    return
 	data = str.join(" ",args[2:])
