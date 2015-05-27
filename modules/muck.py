@@ -40,6 +40,7 @@ class MuckModule(Module):
 	self.hook_command("delplayer", self.command_delplayer)
 	self.hook_command("delchar", self.command_delchar)
 	self.hook_command("listchars", self.command_listchars)
+	self.hook_command("listallchars", self.command_listallchars)
 	self.hook_numeric("330", self.handle_330)
 
     def command_help(self, bot, event_args):
@@ -64,11 +65,27 @@ class MuckModule(Module):
 	    bot.reply("List of valid attributes: %s" % str.join(", ",self.attributes))
 	elif args[0] == "listchars":
 	    bot.reply("{0}listchars [playername]: Lists all of your characters or all of another player's characters.".format(prefix))
+	elif args[0] == "listallchars":
+	    bot.reply("{0}listallchars: Lists all characters and which accounts they are linked to in the database. Admin only.".format(prefix))
 	return
 
     def command_delplayer(self, bot, event_args):
 	bot.reply("Admin command to delete a player from the db, NYI")
 	return
+
+    def command_listallchars(self, bot, event_args):
+	if not bot.check_permission("admin", ""):
+	    bot.reply("Permission denied: You are not an admin.")
+	    return
+	#admin
+	accounts = self.get_accounts()
+	if accounts == "":
+	    bot.reply("I have no characters stored.")
+	    return
+	accounts = list(set(accounts))
+	bot.reply("All messages sent in query.")
+	for account in accounts:
+	    bot.privmsg(event_args["sender"], account + ": " + str.join(", ", self.get_chars(account)))
 
     def command_delchar(self, bot, event_args):
 	name = event_args["args"][0]
@@ -242,6 +259,12 @@ class MuckModule(Module):
 	c.execute("SELECT char_name FROM characters WHERE nickserv_account = ? COLLATE NOCASE;", (accountname,))
 	return [x[0] for x in c.fetchall()]
 
+    def get_accounts(self):
+	#returns a list of all accounts
+	c = self.dbconn.cursor()
+	c.execute("SELECT nickserv_account FROM characters;")
+	return [x[0] for x in c.fetchall()]
+
     def do_delchar(self, bot, event_args, accountname, admin=False):
 	#verify user if not an admin and delete character
 	args = event_args["args"]
@@ -298,10 +321,8 @@ class MuckModule(Module):
     def do_listchars(self, bot, event_args, accountname):
 	characters = self.get_chars(accountname)
 	if characters:
-	    print(characters)
-	    print(str.join(", ",characters))
 	#they have at least one
-	    self.send_message(bot, event_args["target"], event_args["sender"], "{0} has the following characters: {1}".format(str(accountname), str.join(",", characters)))
+	    self.send_message(bot, event_args["target"], event_args["sender"], "{0} has the following characters: {1}".format(str(accountname), str.join(", ", characters)))
 	else:
 	    self.send_message(bot, event_args["target"], event_args["sender"], "%s has no characters." % accountname)
 	return
