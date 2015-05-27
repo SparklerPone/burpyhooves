@@ -70,8 +70,20 @@ class MuckModule(Module):
 	return
 
     def command_delplayer(self, bot, event_args):
-	bot.reply("Admin command to delete a player from the db, NYI")
-	return
+	if not bot.check_permission("admin", ""):
+	    bot.reply("Permission denied: You are not an admin.")
+	    return
+	args = event_args["args"]
+	if len(args) == 0:
+	    bot.reply("delplayer: Requires a username to delete.")
+	    return
+	account = args[0]
+	if not self.check_account_exists(account):
+	    bot.reply("Accounts %s doesn't exist." % account)
+	    return
+	characters = self.get_chars(account)
+	self.del_account(account)
+	bot.reply("Account " + account + " deleted. Characters deleted: {0}".format(str.join(", ", characters)))
 
     def command_listallchars(self, bot, event_args):
 	if not bot.check_permission("admin", ""):
@@ -239,6 +251,14 @@ class MuckModule(Module):
 	    return False
 	return True
 
+    def check_account_exists(self, accountname):
+	#checks if the given account exists in the database
+	c = self.dbconn.cursor()
+	c.execute("SELECT * FROM characters WHERE nickserv_account = ? COLLATE NOCASE;", (accountname,))
+	if c.fetchone() == None:
+	    return False
+	return True
+
     def check_ownership(self, name, accountname):
 	#checks if accountname owns the character "name"
 	c = self.dbconn.cursor()
@@ -280,6 +300,11 @@ class MuckModule(Module):
 	c.execute("DELETE FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
 	self.dbconn.commit()
 	self.send_message(bot, event_args["target"], event_args["sender"], "Successfuly deleted character %s" % name)
+
+    def del_account(self, accountname):
+	c = self.dbconn.cursor()
+	c.execute("DELETE FROM characters WHERE nickserv_account = ? COLLATE NOCASE;", (accountname,))
+	self.dbconn.commit()
 
     def do_claim(self, bot, message, accountname):
 	#claims a character and links it to their nickserv account
