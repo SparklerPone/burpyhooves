@@ -33,7 +33,8 @@ class BurpyHooves:
 
     def run(self):
         self.connection.connect()
-        #self.raw("CAP REQ :sasl")
+	if self.config["network"]["sasl"]["use"] == True:
+            self.raw("CAP REQ :sasl")
         self.raw("NICK %s" % self.me["nicks"][0])  # Nicks thing is a temp hack
         self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
 
