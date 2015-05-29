@@ -23,7 +23,7 @@ class BurpyHooves:
         self.module_manager = ModuleManager(self)
         self.hook_manager = HookManager(self)
         self.perms = Permissions(self)
-        self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"], self.config["proxies"].get(self.net.get("proxy", "none"), None))
+        self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"], self.config["proxies"].get(self.net.get("proxy", "none"), None), self.net.get("flood_interval", 0.0))
         self.running = True
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
         self.db = Database("etc/burpyhooves.db")
@@ -36,6 +36,8 @@ class BurpyHooves:
             proxy = self.config["proxies"].get(self.config["misc"]["http_proxy"], "none")
             if proxy != "none":
                 self.requests_session.proxies = {"http": proxy, "https": proxy}
+
+        self.flood_verbs = [x.lower() for x in self.net.get("flood_verbs", [])]
 
     def run(self):
         self.connection.connect()
@@ -57,7 +59,12 @@ class BurpyHooves:
         @param line: The raw line to send, without a trailing carriage return or newline.
         """
         logging.debug("[IRC] <- %s" % line)
-        self.connection.write_line(line)
+        ln = Line.parse(line)
+        force = True  # Whether we bypass flood protection or not.
+        if ln.command.lower() in self.flood_verbs:
+            force = False
+
+        self.connection.write_line(line, force)
 
     def parse_line(self, ln):
         logging.debug("[IRC] -> %s" % ln.linestr)
