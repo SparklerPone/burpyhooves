@@ -3,6 +3,7 @@ import sys
 import json
 import base64
 import logging
+import requests
 
 from line import Line
 from database import Database
@@ -30,6 +31,11 @@ class BurpyHooves:
         self.names = defaultdict(list)
         self._setup_hooks()
         logging.basicConfig(level=getattr(logging, self.config["misc"]["loglevel"]), format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        self.requests_session = requests.session()
+        if self.config["misc"].get("http_proxy", "none") != "none":
+            proxy = self.config["proxies"].get(self.config["misc"]["http_proxy"], "none")
+            if proxy != "none":
+                self.requests_session.proxies = {"http": proxy, "https": proxy}
 
     def run(self):
         self.connection.connect()
@@ -234,6 +240,25 @@ class BurpyHooves:
         """
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
+
+    # Web stuff.
+    def http_get(self, url, **kwargs):
+        """
+        Perform an HTTP GET using requests.
+        @param url: The URL to GET.
+        @param kwargs: Any arguments to pass to requests.get()
+        @return: requests.Response object.
+        """
+        return self.requests_session.get(url, **kwargs)
+
+    def http_post(self, url, **kwargs):
+        """
+        Perform an HTTP POST using requests.
+        @param url: The URL to POST to.
+        @param kwargs: Any arguments to pass to requests.get()
+        @return: requests.Response object.
+        """
+        return self.requests_session.post(url, **kwargs)
 
     # Internal hooks
     def _setup_hooks(self):

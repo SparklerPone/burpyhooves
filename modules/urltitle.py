@@ -36,11 +36,13 @@ class TitleFetchThread(threading.Thread):
 
     def run(self):
         try:
-            data = urllib2.urlopen(self.url, None, 1.5).read()
+            res = self.module.bot.http_get(self.url, stream=True, timeout=5.0)
+            data = next(res.iter_content(4096))
         except Exception as e:
             logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
             return
 
         soup = BeautifulSoup(data)
         if hasattr(soup, "title") and soup.title is not None:
-            self.reply_func("[ %s ] - %s" % (soup.title.text, self.url))
+            safe_title = soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]
+            self.reply_func("[ %s ] - %s" % (safe_title, self.url))
