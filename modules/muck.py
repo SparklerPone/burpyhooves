@@ -42,6 +42,7 @@ class MuckModule(Module):
 	self.hook_command("listchars", self.command_listchars)
 	self.hook_command("listallchars", self.command_listallchars)
 	self.hook_command("dbversion", self.command_dbversion)
+	self.hook_command("findchar", self.command_findchar)
 	self.hook_numeric("330", self.handle_330)
 
     def command_dbversion(self, bot, event_args):
@@ -54,7 +55,7 @@ class MuckModule(Module):
 	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar {0}dbversion. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -76,7 +77,45 @@ class MuckModule(Module):
 	    bot.reply("{0}listallchars: Lists all characters and which accounts they are linked to in the database. Admin only.".format(prefix))
 	elif args[0] == "dbversion":
 	    bot.reply("{0}dbversion: Returns the version of the db schema.".format(prefix))
+	elif args[0] == "findchar":
+	    bot.reply("{0}findchar [attribute] <search terms>: Searches the database for characters that match the search terms. Defaults to search by name if no attribute given.") 
 	return
+
+    def command_findchar(self, bot, event_args):
+	args = event_args["args"]
+	if len(args) == 0:
+	    bot.reply("You must give a search term")
+	    return
+
+	if len(args) == 1:
+	    for i in self.attributes:
+		if args[0] == i:
+		    bot.reply("You must enter something to search for.")
+		    return
+	    args.insert(0,"name")
+
+	#Generate the query string
+	query = "SELECT char_name,nickserv_account FROM characters WHERE "
+	for i in self.attributes:
+	    if args[0] == i:
+		query += self.attr_to_sql(i) + " LIKE ?"
+		break
+	c = self.dbconn.cursor()
+	c.execute(query, ('%'+str.join("_",args[1:])+'%',))
+	rows = c.fetchall()
+
+	if len(rows) == 0:
+	    bot.reply("No matches found.")
+	    return
+
+	if len(rows) > 4:
+	    bot.reply("Found %s matches, please narrow your search" % len(rows))
+	    return
+
+	replystring = "Found %s match(es):" % len(rows)
+	for i in rows:
+	    replystring += " Character: " + i[0] + " owned by: " + i[1] + ","
+	bot.reply(replystring[:-1])
 
     def command_delplayer(self, bot, event_args):
 	if not bot.check_permission("admin", ""):
