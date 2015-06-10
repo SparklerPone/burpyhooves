@@ -41,13 +41,20 @@ class MuckModule(Module):
 	self.hook_command("delchar", self.command_delchar)
 	self.hook_command("listchars", self.command_listchars)
 	self.hook_command("listallchars", self.command_listallchars)
+	self.hook_command("dbversion", self.command_dbversion)
 	self.hook_numeric("330", self.handle_330)
+
+    def command_dbversion(self, bot, event_args):
+	c = self.dbconn.cursor()
+	c.execute("PRAGMA user_version;")
+	row = c.fetchall()
+	bot.reply(row[0][0])
 
     def command_help(self, bot, event_args):
 	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar {0}dbversion. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -67,6 +74,8 @@ class MuckModule(Module):
 	    bot.reply("{0}listchars [playername]: Lists all of your characters or all of another player's characters.".format(prefix))
 	elif args[0] == "listallchars":
 	    bot.reply("{0}listallchars: Lists all characters and which accounts they are linked to in the database. Admin only.".format(prefix))
+	elif args[0] == "dbversion":
+	    bot.reply("{0}dbversion: Returns the version of the db schema.".format(prefix))
 	return
 
     def command_delplayer(self, bot, event_args):
