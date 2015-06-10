@@ -47,7 +47,7 @@ class MuckModule(Module):
 	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}delplayer {0}delchar. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -202,7 +202,7 @@ class MuckModule(Module):
 	attribute = str(args[1].lower())
 
 	if attribute not in self.attributes:
-	    bot.reply("%s is not a valid attribute." % attribute)
+	    bot.reply("%s is not a valid attribute. See \".help attributes\"" % attribute)
             return
 
 	if attribute == "name":
@@ -294,12 +294,12 @@ class MuckModule(Module):
 	    #verify account
 	    if not self.check_ownership(name, accountname):
 		self.send_message(bot, event_args["target"], event_args["sender"], "You do not have permission to delete that character.")
-	    return
+		return
 	#delete
 	c = self.dbconn.cursor()
 	c.execute("DELETE FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
 	self.dbconn.commit()
-	self.send_message(bot, event_args["target"], event_args["sender"], "Successfuly deleted character %s" % name)
+	self.send_message(bot, event_args["target"], event_args["sender"], "Successfully deleted character %s" % name)
 
     def del_account(self, accountname):
 	c = self.dbconn.cursor()
