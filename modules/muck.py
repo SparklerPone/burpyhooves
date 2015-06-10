@@ -397,7 +397,14 @@ class MuckModule(Module):
 	#they have at least one
 	    self.send_message(bot, event_args["target"], event_args["sender"], "{0} has the following characters: {1}".format(str(accountname), str.join(", ", characters)))
 	else:
-	    self.send_message(bot, event_args["target"], event_args["sender"], "%s has no characters." % accountname)
+	#no characters on that account name, check if character exists, then get owner to return
+	    character = self.get_ownership(accountname)
+	    if character == None:
+		self.send_message(bot, event_args["target"], event_args["sender"], "%s has no characters." % accountname)
+	    else:
+		#that character is owned, return that data instead
+		characters = self.get_chars(str(character[0]))
+		self.send_message(bot, event_args["target"], event_args["sender"], "{0}, which is owned by {1} has the following characters: {2}".format(str(accountname), str(character[0]), str.join(", ", characters)))
 	return
 	
 
