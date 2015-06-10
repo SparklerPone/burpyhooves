@@ -404,7 +404,7 @@ class MuckModule(Module):
 	    else:
 		#that character is owned, return that data instead
 		characters = self.get_chars(str(character[0]))
-		self.send_message(bot, event_args["target"], event_args["sender"], "{0}, which is owned by {1} has the following characters: {2}".format(str(accountname), str(character[0]), str.join(", ", characters)))
+		self.send_message(bot, event_args["target"], event_args["sender"], "{0}, whom is owned by {1}, has the following characters: {2}".format(str(accountname), str(character[0]), str.join(", ", characters)))
 	return
 	
 
