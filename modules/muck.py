@@ -78,7 +78,7 @@ class MuckModule(Module):
 	elif args[0] == "dbversion":
 	    bot.reply("{0}dbversion: Returns the version of the db schema.".format(prefix))
 	elif args[0] == "findchar":
-	    bot.reply("{0}findchar [attribute] <search terms>: Searches the database for characters that match the search terms. Defaults to search by name if no attribute given.") 
+	    bot.reply("{0}findchar [attribute] <search terms>: Searches the database for characters that match the search terms. Defaults to search by name if no attribute given.".format(prefix)) 
 	return
 
     def command_findchar(self, bot, event_args):
