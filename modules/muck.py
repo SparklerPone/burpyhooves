@@ -8,6 +8,9 @@ class MuckModule(Module):
     description = "Character container"
     message_queue = deque()
     dbconn = 0
+#attributes to add: url, accessories, fullname
+#attributes to rename: name->irc_name
+#attributes to remove long1/2/3
     attributes = [ "name", "sex", "species", "job", "age", "coat", "mane", "eyes", "cm", "orientation",
 		   "height", "weight", "smell", "taste", "feel", "fetish", "short", "long1", "long2",
 		   "long3"]
@@ -62,7 +65,7 @@ class MuckModule(Module):
 	elif args[0] == "hoof":
 	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See {0}help attributes".format(prefix))
 	elif args[0] == "edit":
-	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 200 characters per <value>. See {0}help attributes".format(prefix))
+	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 300 characters per <value>. See {0}help attributes".format(prefix))
 	elif args[0] == "delplayer":
 	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only. Not yet implemented.".format(prefix))
 	elif args[0] == "delchar":
@@ -243,8 +246,8 @@ class MuckModule(Module):
 	if not self.check_char_exists(name):
 	    bot.reply("%s does not exist as a character." % name)
 	    return
-	if len(str.join("",args[2:])) > 200:
-	    bot.reply("Maximum length for a value is 200 characters")
+	if len(str.join("",args[2:])) > 300:
+	    bot.reply("Maximum length for a value is 300 characters")
 	    return
 
 	attribute = str(args[1].lower())
@@ -382,7 +385,7 @@ class MuckModule(Module):
 	i = 0
 	sqlstring = None
 	for attribute in self.attributes:
-	    if attribute == str(args[1]):
+	    if attribute == str(args[1]).lower():
 		sqlstring = self.generate_sql_update(i)
 		break
 	    i += 1
