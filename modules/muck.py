@@ -39,7 +39,6 @@ class MuckModule(Module):
 	c.execute("PRAGMA user_version;")
 	version = c.fetchone()
 	if version[0] < 1:
-	    #db conversion time!
 	     try:
 		print("Old version of DB detected, updating to version 1.")
 		c.execute('''CREATE TABLE characters_new
@@ -66,6 +65,7 @@ class MuckModule(Module):
 		c.execute("ALTER TABLE characters_new RENAME TO characters")
 		c.execute("PRAGMA user_version = 1")
 	 	self.dbconn.commit()
+		version[0] = 1
 	 	print("DB successfully updated to version 1!")
 	     except Exception as e:
 		print("Failed to update to version 1 DB, hopefully you had a backup. Aborting!")
@@ -236,14 +236,14 @@ class MuckModule(Module):
 	#send data to source
 	    i = 0
 	    for message in row:
-		if message != "":
+		if message and message != "":
 		    bot.reply("%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
 		i += 1
 	    return
 	#else data in query
 	i = 0
 	for message in row:
-	    if message != "":
+	    if message and message != "":
 		bot.privmsg(event_args["sender"], "%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
 	    i += 1
 
