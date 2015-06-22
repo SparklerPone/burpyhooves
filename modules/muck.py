@@ -24,9 +24,6 @@ class MuckModule(Module):
     description = "Character container"
     message_queue = deque()
     dbconn = 0
-#attributes to add: url, accessories, fullname
-#attributes to rename: name->irc_name
-#attributes to remove long1/2/3
     attributes = [ "irc_name", "fullname", "othername", "sex", "species", "job", "age", "coat", "mane", "accessories", "eyes", "cm", "orientation",
 		   "height", "weight", "smell", "taste", "feel", "fetish", "url", "short", "long1", "long2",
 		   "long3"]
@@ -113,6 +110,7 @@ class MuckModule(Module):
 	self.hook_command("listallchars", self.command_listallchars)
 	self.hook_command("dbversion", self.command_dbversion)
 	self.hook_command("findchar", self.command_findchar)
+	self.hook_command("techinfo", self.command_techinfo)
 	self.hook_numeric("330", self.handle_330)
 
     def command_dbversion(self, bot, event_args):
@@ -125,7 +123,7 @@ class MuckModule(Module):
 	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -148,8 +146,27 @@ class MuckModule(Module):
 	elif args[0] == "dbversion":
 	    bot.reply("{0}dbversion: Returns the version of the db schema.".format(prefix))
 	elif args[0] == "findchar":
-	    bot.reply("{0}findchar [attribute] <search terms>: Searches the database for characters that match the search terms. Defaults to search by name if no attribute given.".format(prefix)) 
+	    bot.reply("{0}findchar [attribute] <search terms>: Searches the database for characters that match the search terms. Defaults to search by name if no attribute given.".format(prefix))
+	elif args[0] == "techinfo":
+	    bot.reply("{0}techinfo <charname>: Returns all the technical info about a character".format(prefix))
 	return
+
+    def command_techinfo(self, bot, event_args):
+	args = event_args["args"]
+	if len(args) == 0:
+	    bot.reply("You must specify a character")
+	    return
+	
+	name = event_args["args"][0]
+
+	if not self.check_char_exists(name):
+            bot.reply("Character %s does not exist." % name)
+            return
+
+	c = self.dbconn.cursor()
+	c.execute("SELECT nickserv_account,timestamp,creation_time FROM characters WHERE char_ircname = ? COLLATE NOCASE", (name,))
+	data = c.fetchone()
+	bot.reply("Nickserv account: %s Last editted: %s Created: %s" % (data[0],data[1],data[2]))
 
     def command_findchar(self, bot, event_args):
 	args = event_args["args"]
