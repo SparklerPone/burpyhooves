@@ -16,7 +16,9 @@
             "method": "plain",
             "username": "NotBurpyHooves",
             "password": "s3cur3p4ss"
-        }
+        },
+        "flood_interval": 0.5,
+        "flood_verbs": ["PRIVMSG", "NOTICE"]
 	},
 
 	"proxies": {

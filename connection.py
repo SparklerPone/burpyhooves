@@ -1,4 +1,19 @@
+# This file is part of BurpyHooves.
+# 
+# BurpyHooves is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# BurpyHooves is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the#  GNU General Public License
+# along with BurpyHooves.  If not, see <http://www.gnu.org/licenses/>.
 import ssl
+import time
 import socks
 import select
 import socket
@@ -10,7 +25,7 @@ from linebuffer import LineBuffer
 
 
 class IRCConnection:
-    def __init__(self, host, port, use_ssl=False, proxy=None):
+    def __init__(self, host, port, use_ssl=False, proxy=None, sendq_delay=0):
         self.host = host
         self.port = port
         self.ssl = use_ssl
@@ -18,6 +33,9 @@ class IRCConnection:
         self._setup_sockets(use_ssl, proxy)
         self.buffer = LineBuffer()
         self.lock = threading.Lock()
+        self.sendq = []
+        self.sendq_delay = sendq_delay
+        self.last_send = 0.0
 
     def connect(self):
         self.socket.connect((self.host, self.port))
@@ -28,6 +46,7 @@ class IRCConnection:
         self.socket.close()
 
     def loop(self):
+        self.handle_queue()
         readable, writable, errored = select.select([self.socket], [], [], 0.1)
 
         if readable:
@@ -39,9 +58,20 @@ class IRCConnection:
 
         return True
 
-    def write_line(self, line):
+    def write_line(self, line, force=False):
         with self.lock:  # We use a lock here because some modules might call reply() from a new thread, which might end up breaking here.
-            self.socket.send("%s\r\n" % line)
+            if force:
+                self.socket.send("%s\r\n" % line)
+            else:
+                self.sendq.append(line)
+
+    def handle_queue(self):
+        with self.lock:
+            if self.sendq:
+                now = time.time()
+                if (now - self.last_send) >= self.sendq_delay:
+                    self.socket.send("%s\r\n" % self.sendq.pop(0))
+                    self.last_send = now
 
     def _setup_sockets(self, use_ssl, proxy):
         sock = None

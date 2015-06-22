@@ -1,3 +1,17 @@
+# This file is part of BurpyHooves.
+# 
+# BurpyHooves is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# BurpyHooves is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the#  GNU General Public License
+# along with BurpyHooves.  If not, see <http://www.gnu.org/licenses/>.
 import re
 import logging
 import urllib2
@@ -36,11 +50,13 @@ class TitleFetchThread(threading.Thread):
 
     def run(self):
         try:
-            data = urllib2.urlopen(self.url, None, 1.5).read()
+            res = self.module.bot.http_get(self.url, stream=True, timeout=5.0)
+            data = next(res.iter_content(4096))
         except Exception as e:
             logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
             return
 
         soup = BeautifulSoup(data)
         if hasattr(soup, "title") and soup.title is not None:
-            self.reply_func("[ %s ] - %s" % (soup.title.text, self.url))
+            safe_title = soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]
+            self.reply_func("[ %s ] - %s" % (safe_title, self.url))

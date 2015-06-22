@@ -1,8 +1,23 @@
 #!/usr/bin/env python2
+# This file is part of BurpyHooves.
+# 
+# BurpyHooves is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# BurpyHooves is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the#  GNU General Public License
+# along with BurpyHooves.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import json
 import base64
 import logging
+import requests
 
 from line import Line
 from database import Database
@@ -22,7 +37,7 @@ class BurpyHooves:
         self.module_manager = ModuleManager(self)
         self.hook_manager = HookManager(self)
         self.perms = Permissions(self)
-        self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"], self.config["proxies"].get(self.net.get("proxy", "none"), None))
+        self.connection = IRCConnection(self.net["address"], self.net["port"], self.net["ssl"], self.config["proxies"].get(self.net.get("proxy", "none"), None), self.net.get("flood_interval", 0.0))
         self.running = True
         self.state = {}  # Dict used to hold stuff like last line received and last message etc...
         self.db = Database("etc/burpyhooves.db")
@@ -30,10 +45,17 @@ class BurpyHooves:
         self.names = defaultdict(list)
         self._setup_hooks()
         logging.basicConfig(level=getattr(logging, self.config["misc"]["loglevel"]), format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        self.requests_session = requests.session()
+        if self.config["misc"].get("http_proxy", "none") != "none":
+            proxy = self.config["proxies"].get(self.config["misc"]["http_proxy"], "none")
+            if proxy != "none":
+                self.requests_session.proxies = {"http": proxy, "https": proxy}
+
+        self.flood_verbs = [x.lower() for x in self.net.get("flood_verbs", [])]
 
     def run(self):
         self.connection.connect()
-	if self.config["network"]["sasl"]["use"] == True:
+        if self.config["network"]["sasl"]["use"]:
             self.raw("CAP REQ :sasl")
         self.raw("NICK %s" % self.me["nicks"][0])  # Nicks thing is a temp hack
         self.raw("USER %s * * :%s" % (self.me["ident"], self.me["gecos"]))
@@ -51,7 +73,12 @@ class BurpyHooves:
         @param line: The raw line to send, without a trailing carriage return or newline.
         """
         logging.debug("[IRC] <- %s" % line)
-        self.connection.write_line(line)
+        ln = Line.parse(line)
+        force = True  # Whether we bypass flood protection or not.
+        if ln.command.lower() in self.flood_verbs:
+            force = False
+
+        self.connection.write_line(line, force)
 
     def parse_line(self, ln):
         logging.debug("[IRC] -> %s" % ln.linestr)
@@ -237,6 +264,25 @@ class BurpyHooves:
         """
         ln = self.state["last_line"]
         self.notice(ln.hostmask.nick, message)
+
+    # Web stuff.
+    def http_get(self, url, **kwargs):
+        """
+        Perform an HTTP GET using requests.
+        @param url: The URL to GET.
+        @param kwargs: Any arguments to pass to requests.get()
+        @return: requests.Response object.
+        """
+        return self.requests_session.get(url, **kwargs)
+
+    def http_post(self, url, **kwargs):
+        """
+        Perform an HTTP POST using requests.
+        @param url: The URL to POST to.
+        @param kwargs: Any arguments to pass to requests.get()
+        @return: requests.Response object.
+        """
+        return self.requests_session.post(url, **kwargs)
 
     # Internal hooks
     def _setup_hooks(self):
