@@ -53,7 +53,7 @@ class MuckModule(Module):
 	    return "Could not open database, see console for more details. Aborting!"
 	
 	c.execute("PRAGMA user_version;")
-	version = c.fetchone()
+	version = list(c.fetchone())
 	if version[0] < 1:
 	     try:
 		print("Old version of DB detected, updating to version 1.")
@@ -87,6 +87,20 @@ class MuckModule(Module):
 		print("Failed to update to version 1 DB, hopefully you had a backup. Aborting!")
 		print("Exception was: %s" % (str(e)))
 		return "Failed to update to DB version 1, see console for more details"
+
+	if version[0] < 2:
+	    try:
+		print("Old version of DB detected, updating to version 2.")
+		c.execute("ALTER TABLE characters add column creation_time")
+		self.dbconn.commit()
+		c.execute("PRAGMA user_version = 2")
+		self.dbconn.commit()
+		version[0] = 2
+		print("DB successfully updated to version 2!")
+            except Exception as e:
+                print("Failed to update to version 2 DB, hopefully you had a backup. Aborting!")
+                print("Exception was: %s" % (str(e)))
+                return "Failed to update to DB version 2, see console for more details"
 
 
 	self.hook_command("claim", self.command_claim)
@@ -420,8 +434,8 @@ class MuckModule(Module):
 	if row is not None:
 	    self.send_message(bot, message["target"], message["sender"], "%s has already been claimed by %s." % (row[0], row[1]))
 	    return
-	values = (str(name), str(accountname), datetime.datetime.now())
-	c.execute("INSERT INTO characters(char_ircname, nickserv_account, timestamp) VALUES (?,?,?)", (values))
+	values = (str(name), str(accountname), datetime.datetime.now(), datetime.datetime.now())
+	c.execute("INSERT INTO characters(char_ircname, nickserv_account, timestamp, creation_time) VALUES (?,?,?,?)", (values))
 	self.dbconn.commit()
 	self.send_message(bot, message["target"], message["sender"], "%s has claimed the character %s" % (message["sender"], message["args"][0]))
 	return
