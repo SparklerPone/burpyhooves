@@ -87,7 +87,7 @@ class HookManager:
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
             splitmsg = message.split(" ")
-            if message[0] == self.bot.config["misc"]["command_prefix"]:
+            if message and  message[0] == self.bot.config["misc"]["command_prefix"]:
                 command = splitmsg[0][1:]
                 args = splitmsg[1:]
                 event_args = {
