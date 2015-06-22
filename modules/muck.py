@@ -120,7 +120,7 @@ class MuckModule(Module):
 	elif args[0] == "edit":
 	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 300 characters per <value>. See {0}help attributes. To unset an attribute, enter \".\" for the value.".format(prefix))
 	elif args[0] == "delplayer":
-	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only. Not yet implemented.".format(prefix))
+	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only.".format(prefix))
 	elif args[0] == "delchar":
 	    bot.reply("{0}delchar <charname>: Deletes <character> from the database. You must own the character or be a bot admin.".format(prefix))
 	elif args[0] == "help":
@@ -238,6 +238,7 @@ class MuckModule(Module):
 	if len(args) > 1:
 	    attribute = args[1:]
 	    attribute = self.parse_attributes(list(set(attribute)))
+	    attribute = list(set(attribute))
 	    if len(attribute) == 0:
 		bot.reply("No valid attributes given, aborting")
 		return
@@ -450,7 +451,7 @@ class MuckModule(Module):
 	if data == "":
 	    self.send_message(bot, event_args["target"], event_args["sender"], "Successfully removed %s." % str(args[1]))
 	else:
-	    self.send_message(bot, event_args["target"], event_args["sender"], "Successfully updated %s to %s" % (str(args[1],data)))
+	    self.send_message(bot, event_args["target"], event_args["sender"], "Successfully updated %s to %s" % (str(args[1]),data))
 	return
 
     def do_listchars(self, bot, event_args, accountname):
@@ -477,7 +478,7 @@ class MuckModule(Module):
 	#return a list of all the valid attributes
 	attrs = []
 	for attr in message:
-	    if attr in self.attributes:
+	    if attr in self.attributes or attr == "long":
 		attrs.append(attr)
 	return attrs
 	
@@ -487,6 +488,10 @@ class MuckModule(Module):
 	for attr in attributeslist:
 	    if self.attr_to_sql(attr) != "":
 		sqls.append(self.attr_to_sql(attr))
+	    if attr == "long":
+		sqls.append("char_long1")
+		sqls.append("char_long2")
+		sqls.append("char_long3")
 	return sqls
 
     def sqllist_to_string(self, sqllist):
