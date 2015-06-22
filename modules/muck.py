@@ -11,12 +11,12 @@ class MuckModule(Module):
 #attributes to add: url, accessories, fullname
 #attributes to rename: name->irc_name
 #attributes to remove long1/2/3
-    attributes = [ "name", "sex", "species", "job", "age", "coat", "mane", "eyes", "cm", "orientation",
-		   "height", "weight", "smell", "taste", "feel", "fetish", "short", "long1", "long2",
+    attributes = [ "irc_name", "fullname", "othername", "sex", "species", "job", "age", "coat", "mane", "accessories", "eyes", "cm", "orientation",
+		   "height", "weight", "smell", "taste", "feel", "fetish", "url", "short", "long1", "long2",
 		   "long3"]
-    sqlattributes = [ "char_name", "char_sex", "char_species", "char_job", "char_age", "char_coat",
-		      "char_mane", "char_eyes", "char_cm", "char_orientation", "char_height",
-		      "char_weight", "char_smell", "char_taste", "char_feel", "char_fetish",
+    sqlattributes = [ "char_ircname", "char_fullname", "char_othername", "char_sex", "char_species", "char_job", "char_age", "char_coat",
+		      "char_mane", "char_accessories", "char_eyes", "char_cm", "char_orientation", "char_height",
+		      "char_weight", "char_smell", "char_taste", "char_feel", "char_fetish", "char_url",
 		      "char_short", "char_long1", "char_long2", "char_long3"]
 
     def module_init(self, bot):
@@ -36,6 +36,43 @@ class MuckModule(Module):
 	    print("Failed to open sql database! %s" % (str(e)))
 	    return "Could not open database, see console for more details. Aborting!"
 	
+	c.execute("PRAGMA user_version;")
+	version = c.fetchone()
+	if version[0] < 1:
+	    #db conversion time!
+	     try:
+		print("Old version of DB detected, updating to version 1.")
+		c.execute('''CREATE TABLE characters_new
+         	(char_ircname TEXT NOT NULL, char_fullname TEXT, char_othername TEXT, char_sex TEXT, char_species TEXT, char_job TEXT,
+         	 char_age INTEGER, char_coat TEXT, char_mane TEXT, char_accessories TEXT, char_eyes TEXT,
+          	 char_cm TEXT, char_orientation TEXT, char_height TEXT, char_weight TEXT,
+          	 char_smell TEXT, char_taste TEXT, char_feel TEXT, char_fetish TEXT, char_url TEXT, 
+           	 char_short TEXT, char_long1 TEXT, char_long2 TEXT, char_long3 TEXT,
+          	 nickserv_account TEXT NOT NULL, timestamp TEXT);''')
+	 	c.execute("ALTER TABLE characters add column char_fullname TEXT")
+	 	c.execute("ALTER TABLE characters add column char_othername TEXT")
+	 	c.execute("ALTER TABLE characters add column char_accessories TEXT")
+	 	c.execute("ALTER TABLE characters add column char_url TEXT")
+	 	c.execute("ALTER TABLE characters add column timestamp TEXT")
+		self.dbconn.commit()
+		c.execute('''SELECT char_name,char_fullname,char_othername,char_sex,char_species,char_job,char_age,char_coat,
+			char_mane,char_accessories,char_eyes,char_cm,char_orientation,char_height,char_weight,char_smell,
+			char_taste,char_feel,char_fetish,char_url,char_short,char_long1,char_long2,char_long3,nickserv_account,
+			timestamp FROM characters''')
+	 	rows = c.fetchall()
+		for row in rows:
+		    c.execute("INSERT INTO characters_new VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row)
+		c.execute("DROP TABLE characters")
+		c.execute("ALTER TABLE characters_new RENAME TO characters")
+		c.execute("PRAGMA user_version = 1")
+	 	self.dbconn.commit()
+	 	print("DB successfully updated to version 1!")
+	     except Exception as e:
+		print("Failed to update to version 1 DB, hopefully you had a backup. Aborting!")
+		print("Exception was: %s" % (str(e)))
+		return "Failed to update to DB version 1, see console for more details"
+
+
 	self.hook_command("claim", self.command_claim)
 	self.hook_command("hoof", self.command_hoof)
 	self.hook_command("help", self.command_help)
@@ -95,10 +132,10 @@ class MuckModule(Module):
 		if args[0] == i:
 		    bot.reply("You must enter something to search for.")
 		    return
-	    args.insert(0,"name")
+	    args.insert(0,"irc_name")
 
 	#Generate the query string
-	query = "SELECT char_name,nickserv_account FROM characters WHERE "
+	query = "SELECT char_ircname,nickserv_account FROM characters WHERE "
 	for i in self.attributes:
 	    if args[0] == i:
 		query += self.attr_to_sql(i) + " LIKE ?"
@@ -191,7 +228,7 @@ class MuckModule(Module):
 
 	#TODO: Clean up this junk
 	sqlparams = self.parse_sqlattributes(attribute)
-	sqlstring = ("SELECT %s FROM characters WHERE char_name = ? COLLATE NOCASE;" % self.sqllist_to_string(sqlparams))
+	sqlstring = ("SELECT %s FROM characters WHERE char_ircname = ? COLLATE NOCASE;" % self.sqllist_to_string(sqlparams))
 	c = self.dbconn.cursor()
 	c.execute(sqlstring, (name,))
 	row = c.fetchone()
@@ -256,8 +293,8 @@ class MuckModule(Module):
 	    bot.reply("%s is not a valid attribute. See \".help attributes\"" % attribute)
             return
 
-	if attribute == "name":
-	    bot.reply("You may not change your name.")
+	if attribute == "irc_name":
+	    bot.reply("You may not change your irc nickname.")
 	    return
 
 	queue_data = [event_args, 0]
@@ -297,7 +334,7 @@ class MuckModule(Module):
     def check_char_exists(self, name):
 	#checks if the given character exists in the database
 	c = self.dbconn.cursor()
-	c.execute("SELECT * FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	c.execute("SELECT * FROM characters WHERE char_ircname = ? COLLATE NOCASE;", (name,))
 	if c.fetchone() == None:
 	    return False
 	return True
@@ -313,7 +350,7 @@ class MuckModule(Module):
     def check_ownership(self, name, accountname):
 	#checks if accountname owns the character "name"
 	c = self.dbconn.cursor()
-	c.execute("SELECT nickserv_account FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	c.execute("SELECT nickserv_account FROM characters WHERE char_ircname = ? COLLATE NOCASE;", (name,))
 	if c.fetchone()[0] == accountname:
 	    return True
 	return False
@@ -321,13 +358,13 @@ class MuckModule(Module):
     def get_ownership(self, name):
 	#gets account name of character's owner, returns "" on failure
 	c = self.dbconn.cursor()
-	c.execute("SELECT nickserv_account FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	c.execute("SELECT nickserv_account FROM characters WHERE char_ircname = ? COLLATE NOCASE;", (name,))
 	return c.fetchone()
 
     def get_chars(self, accountname):
 	#returns a list of all characters owned by a user
 	c = self.dbconn.cursor()
-	c.execute("SELECT char_name FROM characters WHERE nickserv_account = ? COLLATE NOCASE;", (accountname,))
+	c.execute("SELECT char_ircname FROM characters WHERE nickserv_account = ? COLLATE NOCASE;", (accountname,))
 	return [x[0] for x in c.fetchall()]
 
     def get_accounts(self):
@@ -348,7 +385,7 @@ class MuckModule(Module):
 		return
 	#delete
 	c = self.dbconn.cursor()
-	c.execute("DELETE FROM characters WHERE char_name = ? COLLATE NOCASE;", (name,))
+	c.execute("DELETE FROM characters WHERE char_ircname = ? COLLATE NOCASE;", (name,))
 	self.dbconn.commit()
 	self.send_message(bot, event_args["target"], event_args["sender"], "Successfully deleted character %s" % name)
 
@@ -361,15 +398,14 @@ class MuckModule(Module):
 	#claims a character and links it to their nickserv account
 	name = str(message["args"][0])
 	c = self.dbconn.cursor()
-	c.execute("SELECT char_name,nickserv_account FROM characters WHERE char_name=? COLLATE NOCASE;", (name,))
+	c.execute("SELECT char_ircname,nickserv_account FROM characters WHERE char_ircname=? COLLATE NOCASE;", (name,))
 	row = c.fetchone()
 	if row is not None:
 	    self.send_message(bot, message["target"], message["sender"], "%s has already been claimed by %s." % (row[0], row[1]))
 	    return
-	values = (str(name), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", str(accountname))
-	c.execute("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (values))
+	values = (str(name), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", str(accountname), "")
+	c.execute("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (values))
 	self.dbconn.commit()
-	print(message["sender"] + message["args"][0] + message["target"])
 	self.send_message(bot, message["target"], message["sender"], "%s has claimed the character %s" % (message["sender"], message["args"][0]))
 	return
 
@@ -412,7 +448,7 @@ class MuckModule(Module):
 	
 
     def generate_sql_update(self, i):
-	return ("UPDATE characters SET %s = ? WHERE char_name = ? COLLATE NOCASE;" % self.sqlattributes[i])
+	return ("UPDATE characters SET %s = ? WHERE char_ircname = ? COLLATE NOCASE;" % self.sqlattributes[i])
 
     def parse_attributes(self, message):
 	#return a list of all the valid attributes
