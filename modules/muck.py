@@ -2,6 +2,7 @@ from modules import Module
 from collections import deque
 import string
 import sqlite3
+import datetime
 
 class MuckModule(Module):
     name = "muck"
@@ -102,7 +103,7 @@ class MuckModule(Module):
 	elif args[0] == "hoof":
 	    bot.reply("{0}hoof <charname> [attribute1] [attribute2] [...]: Look up a character or optionally specific attributes. See {0}help attributes".format(prefix))
 	elif args[0] == "edit":
-	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 300 characters per <value>. See {0}help attributes".format(prefix))
+	    bot.reply("{0}edit <charname> <attribute> <value>: Set the attribute of a character you have claimed to <value>. Maximum length of 300 characters per <value>. See {0}help attributes. To unset an attribute, enter \".\" for the value.".format(prefix))
 	elif args[0] == "delplayer":
 	    bot.reply("{0}delplayer <playername>: Deletes all of <playername>'s characters from the database. Admin only. Not yet implemented.".format(prefix))
 	elif args[0] == "delchar":
@@ -403,8 +404,8 @@ class MuckModule(Module):
 	if row is not None:
 	    self.send_message(bot, message["target"], message["sender"], "%s has already been claimed by %s." % (row[0], row[1]))
 	    return
-	values = (str(name), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", str(accountname), "")
-	c.execute("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (values))
+	values = (str(name), str(accountname), datetime.datetime.now())
+	c.execute("INSERT INTO characters(char_ircname, nickserv_account, timestamp) VALUES (?,?,?)", (values))
 	self.dbconn.commit()
 	self.send_message(bot, message["target"], message["sender"], "%s has claimed the character %s" % (message["sender"], message["args"][0]))
 	return
@@ -420,14 +421,21 @@ class MuckModule(Module):
 	data = str.join(" ",args[2:])
 	i = 0
 	sqlstring = None
+	if data == ".":
+	    data = ""
 	for attribute in self.attributes:
 	    if attribute == str(args[1]).lower():
-		sqlstring = self.generate_sql_update(i)
+		sqlstring = ("UPDATE characters SET %s = ? WHERE char_ircname = ? COLLATE NOCASE;" % self.sqlattributes[i])
 		break
 	    i += 1
+
 	c.execute(sqlstring, (data,name))
+	c.execute("UPDATE characters SET timestamp = ? WHERE char_ircname = ? COLLATE NOCASE;", (datetime.datetime.now(),name))
 	self.dbconn.commit()
-	self.send_message(bot, event_args["target"], event_args["sender"], "Successfully updated %s to %s" % (str(args[1]),data))
+	if data == "":
+	    self.send_message(bot, event_args["target"], event_args["sender"], "Successfully removed %s." % str(args[1]))
+	else:
+	    self.send_message(bot, event_args["target"], event_args["sender"], "Successfully updated %s to %s" % (str(args[1],data)))
 	return
 
     def do_listchars(self, bot, event_args, accountname):
