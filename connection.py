@@ -70,7 +70,7 @@ class IRCConnection:
             if self.sendq:
                 now = time.time()
                 if (now - self.last_send) >= self.sendq_delay:
-                    self.socket.send("%s\r\n" % self.sendq.pop(0))
+                    self.socket.send("%s\r\n" % self.sendq.pop(0).encode('utf-8'))
                     self.last_send = now
 
     def _setup_sockets(self, use_ssl, proxy):
