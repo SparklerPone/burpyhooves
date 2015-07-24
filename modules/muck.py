@@ -560,8 +560,8 @@ class MuckModule(Module):
 	#return a list of all the valid attributes
 	attrs = []
 	for attr in message:
-	    if attr in self.attributes or attr == "long":
-		attrs.append(attr)
+	    if attr.lower() in self.attributes or attr.lower() == "long":
+		attrs.append(attr.lower())
 	return attrs
 	
     def parse_sqlattributes(self, attributeslist):
