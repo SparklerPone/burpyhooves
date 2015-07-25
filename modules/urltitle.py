@@ -16,6 +16,8 @@ import re
 import logging
 import urllib2
 import threading
+import socks
+import socket
 
 from bs4 import BeautifulSoup
 from modules import Module
@@ -48,15 +50,46 @@ class TitleFetchThread(threading.Thread):
         self.reply_func = reply_func
         self.module = module
 
+#    def run(self):
+#        try:
+#            res = self.module.bot.http_get(self.url, timeout=5.0)
+#            data = next(res.iter_content(4096))
+#        except Exception as e:
+#            logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
+#            return
+#
+#        soup = BeautifulSoup(data)
+#        if hasattr(soup, "title") and soup.title is not None:
+#            safe_title = soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]
+#            self.reply_func("[ %s ] - %s" % (safe_title, self.url))
+
     def run(self):
+#	s = socks.socksocket()
+        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
+        socket.socket = socks.socksocket
+#	s.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
+	
+
         try:
-            res = self.module.bot.http_get(self.url, stream=True, timeout=5.0)
-            data = next(res.iter_content(4096))
+                request = urllib2.Request(self.url)
+#               request.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.152 Safari/537.36')
+                data = urllib2.urlopen(request)
+
+        except urllib2.HTTPError as e:
+            soup = BeautifulSoup(e.fp.read())
+            if hasattr(soup, "title") and soup.title is not None:
+                self.reply_func("[ %s ]" % (soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]))
+                return
+            else:
+                logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
+                self.reply_func("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
+                return
+
         except Exception as e:
             logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
+#           self.reply_func("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
             return
 
         soup = BeautifulSoup(data)
         if hasattr(soup, "title") and soup.title is not None:
-            safe_title = soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]
-            self.reply_func("[ %s ] - %s" % (safe_title, self.url))
+            self.reply_func("[ %s ]" % (soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]))
