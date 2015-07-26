@@ -112,6 +112,48 @@ class MuckModule(Module):
 	self.hook_command("findchar", self.command_findchar)
 	self.hook_command("techinfo", self.command_techinfo)
 	self.hook_numeric("330", self.handle_330)
+	self.hook_numeric("PRIVMSG", self.on_privmsg)
+
+    def on_privmsg(self, bot, ln):
+	#TODO: Move to core
+	message = ln.params[-1]
+	splitmsg = message.split(" ")
+	args = splitmsg[1:]
+	command = ""
+	if splitmsg[0][0] == ".":
+	    command = splitmsg[0][1:]
+	elif splitmsg[0][0:3].decode('utf8') == '\xe2\x98\x83'.decode('utf8'):
+	    command = splitmsg[0][3:]
+	event_args = {
+        "ln": ln,
+        "args": args,
+        "sender": ln.hostmask.nick,
+        "target": ln.params[0],
+	"command": command
+        }
+	if command:
+	    if command == "claim":
+		self.command_claim(bot, event_args)
+	    elif command == "hoof":
+		self.command_hoof(bot, event_args)
+	    elif command == "help":
+		self.command_help(bot, event_args)
+	    elif command == "edit":
+		self.command_edit(bot, event_args)
+	    elif command == "delplayer":
+		self.command_delplayer(bot, event_args)
+	    elif command == "delchar":
+		self.command_delchar(bot, event_args)
+	    elif command == "listchars":
+		self.command_listchars(bot, event_args)
+	    elif command == "listallchars":
+		self.command_listallchars(bot, event_args)
+	    elif command == "dbversion":
+		self.command_dbversion(bot, event_args)
+	    elif command == "findchar":
+		self.command_findchar(bot, event_args)
+	    elif command == "techinfo":
+		self.command_techinfo(bot, event_args)
 
     def command_dbversion(self, bot, event_args):
 	c = self.dbconn.cursor()
@@ -123,7 +165,7 @@ class MuckModule(Module):
 	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo {0}listchars {0}listallchars. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -142,7 +184,7 @@ class MuckModule(Module):
 	elif args[0] == "listchars":
 	    bot.reply("{0}listchars [playername]: Lists all of your characters or all of another player's characters.".format(prefix))
 	elif args[0] == "listallchars":
-	    bot.reply("{0}listallchars: Lists all characters and which accounts they are linked to in the database. Admin only.".format(prefix))
+	    bot.reply("{0}listallchars: Lists all characters and which accounts they are linked to in the database.".format(prefix))
 	elif args[0] == "dbversion":
 	    bot.reply("{0}dbversion: Returns the version of the db schema.".format(prefix))
 	elif args[0] == "findchar":
@@ -221,9 +263,9 @@ class MuckModule(Module):
 	bot.reply("Account " + account + " deleted. Characters deleted: {0}".format(str.join(", ", characters)))
 
     def command_listallchars(self, bot, event_args):
-	if not bot.check_permission("admin", ""):
-	    bot.reply("Permission denied: You are not an admin.")
-	    return
+	#if not bot.check_permission("admin", ""):
+	#    bot.reply("Permission denied: You are not an admin.")
+	#    return
 	#admin
 	accounts = self.get_accounts()
 	if accounts == "":
@@ -280,20 +322,27 @@ class MuckModule(Module):
 	c = self.dbconn.cursor()
 	c.execute(sqlstring, (name,))
 	row = c.fetchone()
+	sent = False
 	if len(args) > 1 and len(args) < 4:
 	#send data to source
 	    i = 0
 	    for message in row:
 		if message and message != "":
 		    bot.reply("%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
+		    sent = True
 		i += 1
+	    if not sent:
+		bot.reply("%s: No data" % self.sql_to_attr(sqlparams[0]))
 	    return
 	#else data in query
 	i = 0
 	for message in row:
 	    if message and message != "":
 		bot.privmsg(event_args["sender"], "%s: %s" % (self.sql_to_attr(sqlparams[i]),message))
+		sent = True
 	    i += 1
+	if not sent:
+	    bot.reply("%s: No data" % self.sql_to_attr(sqlparams[0]))
 
     def command_claim(self, bot, event_args):
 	if len(event_args["args"]) == 0:
@@ -353,6 +402,7 @@ class MuckModule(Module):
 	#Do stuff on a whois return with a nickserv account
 	accountname = event_args.params[2]
 	nick = event_args.params[1]
+	messagelist = list()
 	for message in self.message_queue:
 	    if message[0]["sender"] != nick:
                 message[1] += 1
@@ -367,8 +417,9 @@ class MuckModule(Module):
 		    self.do_delchar(bot, message[0], accountname)
 		elif(command == "listchars"):
 		    self.do_listchars(bot, message[0], accountname)
-		break
-	self.message_queue.remove(message)
+		messagelist.append(message)
+	for message in messagelist:
+	    self.message_queue.remove(message)
 	self.remove_stale()
 
     def remove_stale(self):
@@ -509,8 +560,8 @@ class MuckModule(Module):
 	#return a list of all the valid attributes
 	attrs = []
 	for attr in message:
-	    if attr in self.attributes or attr == "long":
-		attrs.append(attr)
+	    if attr.lower() in self.attributes or attr.lower() == "long":
+		attrs.append(attr.lower())
 	return attrs
 	
     def parse_sqlattributes(self, attributeslist):
