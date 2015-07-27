@@ -55,7 +55,7 @@ class TitleFetchThread(threading.Thread):
         socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
         socket.socket = socks.socksocket
 
-        if re.match("^https?://(derpiboo(ru\.org|\.ru)|ronxgr5zb4dkwdpt\.onion)/.+", self.url):
+        if re.match("^https?://(derpiboo(ru\.org|\.ru)|ronxgr5zb4dkwdpt\.onion|derpicdn.net)/.+", self.url):
             self.handle_derpibooru()
             return
 
@@ -85,6 +85,9 @@ class TitleFetchThread(threading.Thread):
         if "ronxgr5zb4dkwdpt.onion" in self.url:
             self.url = self.url.replace("ronxgr5zb4dkwdpt.onion", "derpiboo.ru")
             onion = True
+        elif "derpicdn.net" in self.url:
+            match = re.match("https?://derpicdn.net/img/view/\d+/\d+/\d+/(\d+)_.*", self.url)
+            self.url = "https://derpiboo.ru/" + match.group(1)
         self.url = self.url + ".json"
         try:
             data = self.get_data()
