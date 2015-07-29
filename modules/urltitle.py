@@ -55,7 +55,7 @@ class TitleFetchThread(threading.Thread):
         socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
         socket.socket = socks.socksocket
 
-        if re.match("^https?://(derpiboo(ru\.org|\.ru)|ronxgr5zb4dkwdpt\.onion|derpicdn.net)/.+", self.url):
+        if re.match("^https?://(www\.)?(derpiboo(ru\.org|\.ru)|ronxgr5zb4dkwdpt\.onion|derpicdn.net)/.+", self.url):
             self.handle_derpibooru()
             return
 
