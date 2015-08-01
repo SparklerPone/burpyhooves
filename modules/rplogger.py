@@ -226,7 +226,6 @@ class RPLoggerModule(Module):
 		if line[0] == event_args["sender"]:
 		    break
 		if line[1][0] == "\x01":
-		    print line[1]
 		    messages.append("*" + line[0] + line[1].strip("\x01")[6:])
 		else:
 		    messages.append(line[0] + ": " +line[1])
