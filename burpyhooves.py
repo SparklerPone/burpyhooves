@@ -98,8 +98,8 @@ class BurpyHooves:
         elif ln.command == "904":
             logging.warning("SASL authentication failed, continuing login anyways...")
             self.raw("CAP END")
-	elif ln.command == "001":
-	    self.raw("MODE %s +B" % self.me["nicks"][0])
+        elif ln.command == "001":
+            self.raw("MODE %s +B" % self.me["nicks"][0])
 
     def loop(self):
         if not self.connection.loop():
