@@ -39,25 +39,24 @@ class WeatherModule(Module):
         
         url = "https://query.yahooapis.com/v1/public/yql?q="
         query = "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text=\"%s\")" % " ".join(event_args["args"])
-        print url + query
         url = url + urllib.quote("%s" % query, "*()&=") + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
-        t = TitleFetchThread(url, lambda resp: bot.privmsg(reply_to, resp), self)
+        t = TitleFetchThread(url, lambda resp: bot.privmsg(reply_to, resp), self, " ".join(event_args["args"]))
         t.start()
 
 
 
 class TitleFetchThread(threading.Thread):
-    def __init__(self, url, reply_func, module):
+    def __init__(self, url, reply_func, module, place):
         super(TitleFetchThread, self).__init__()
         self.url = url
         self.reply_func = reply_func
         self.module = module
+        self.place = place
 
     def run(self):
         socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
         socket.socket = socks.socksocket
 
-        print self.url
         try:
             data = self.get_data()
         except RuntimeError as e:
@@ -65,7 +64,11 @@ class TitleFetchThread(threading.Thread):
             print str(e)
             return
         yahooweather = json.load(data)
-        weather = yahooweather["query"]["results"]["channel"]
+        try:
+            weather = yahooweather["query"]["results"]["channel"]
+        except Exception as e:
+            self.reply_func("Could not get weather for " + self.place)
+            return
         location = yahooweather["query"]["results"]["channel"]["location"]
         temperature = weather["item"]["condition"]["temp"]
         self.reply_func("Weather for " + location["city"] + " " + location["region"] + ", " + location["country"] + ": [Temperature: " + temperature + weather["units"]["temperature"] + "], [Condition: " + weather["item"]["condition"]["text"] + "], [Wind Speed: " + weather["wind"]["speed"] + " " + weather["units"]["speed"] + "]")
