@@ -86,15 +86,18 @@ class HookManager:
         self.run_hooks("irc_raw", ln)
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
+            if not message:
+                return
             splitmsg = message.split(" ")
-            if message and  message[0] == self.bot.config["misc"]["command_prefix"]:
-                command = splitmsg[0][1:]
-                args = splitmsg[1:]
-                event_args = {
-                    "ln": ln,
-                    "command": command,
-                    "args": args,
-                    "sender": ln.hostmask.nick,
-                    "target": ln.params[0]
-                }
-                self.run_hooks("command_%s" % command.lower(), event_args)
+            for prefix in self.bot.config["misc"]["command_prefix"]:
+                if splitmsg[0].decode('utf-8').startswith(prefix.decode('utf-8')):
+                    command = splitmsg[0][1:]
+                    args = splitmsg[1:]
+                    event_args = {
+                        "ln": ln,
+                        "command": command,
+                        "args": args,
+                        "sender": ln.hostmask.nick,
+                        "target": ln.params[0]
+                    }
+                    self.run_hooks("command_%s" % command.lower(), event_args)
