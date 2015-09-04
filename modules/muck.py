@@ -120,9 +120,7 @@ class MuckModule(Module):
 	splitmsg = message.split(" ")
 	args = splitmsg[1:]
 	command = ""
-	if splitmsg[0][0] == ".":
-	    command = splitmsg[0][1:]
-	elif splitmsg[0][0:3].decode('utf8') == '\xe2\x98\x83'.decode('utf8'):
+	if splitmsg[0][0:3].decode('utf8') == '\xe2\x98\x83'.decode('utf8'):
 	    command = splitmsg[0][3:]
 	event_args = {
         "ln": ln,
@@ -163,9 +161,9 @@ class MuckModule(Module):
 
     def command_help(self, bot, event_args):
 	args = event_args["args"]
-	prefix = bot.config["misc"]["command_prefix"]
+	prefix = bot.config["misc"]["command_prefix"][0]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo {0}listchars {0}listallchars. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <value> to edit them.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo {0}listchars {0}listallchars. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <attribute> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -230,7 +228,8 @@ class MuckModule(Module):
 		query += self.attr_to_sql(i) + " LIKE ?"
 		break
 	c = self.dbconn.cursor()
-	c.execute(query, ('%'+str.join("_",args[1:])+'%',))
+        print query
+	c.execute(query, ("%" + str.join("_",args[1:]) + "%",))
 	rows = c.fetchall()
 
 	if len(rows) == 0:
@@ -313,7 +312,7 @@ class MuckModule(Module):
 	    attribute = self.parse_attributes(list(set(attribute)))
 	    attribute = list(set(attribute))
 	    if len(attribute) == 0:
-		bot.reply("No valid attributes given, aborting")
+		bot.reply("No valid attributes given. Use \"{0}help attributes\" for a list of valid attributes, aborting".format(bot.config["misc"]["command_prefix"][0]))
 		return
 
 	#TODO: Clean up this junk
