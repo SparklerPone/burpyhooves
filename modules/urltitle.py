@@ -1,3 +1,5 @@
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
 # This file is part of BurpyHooves.
 # 
 # BurpyHooves is free software: you can redistribute it and/or modify
@@ -86,9 +88,10 @@ class TitleFetchThread(threading.Thread):
             self.url = self.url.replace("ronxgr5zb4dkwdpt.onion", "derpiboo.ru")
             onion = True
         elif "derpicdn.net" in self.url:
-            match = re.match("https?://derpicdn.net/img/view/\d+/\d+/\d+/(\d+)_.*", self.url)
+            match = re.match("https?://derpicdn.net/img/view/\d+/\d+/\d+/(\d+).*", self.url)
             self.url = "https://derpiboo.ru/" + match.group(1)
-        self.url = self.url + ".json"
+        match = re.match("^([^?]+)", self.url)
+        self.url = match.group(1) + ".json"
         try:
             data = self.get_data()
         except RunTimeError as e:
@@ -100,20 +103,34 @@ class TitleFetchThread(threading.Thread):
             return
 
         derpiresponse = json.load(data)
-        artist = None
+        artist = ""
         taglist = derpiresponse["tags"].split(", ")
-        tags = derpiresponse["tags"]
         for tag in taglist:
-            if tag == "explicit" or tag == "safe" or tag == "questionable" or tag == "suggestive":
-                 rating = tag
+            if tag == "explicit" or tag == "safe" or tag == "questionable" or tag == "suggestive" or tag == "grimdark" or tag == "semi-grimdark":                                                                                                          rating = tag
             if tag.startswith(u"artist:"):
-                 print "Found artist"
-                 artist = tag[7:]
+                 artist = artist + " " + tag[7:]
         if not artist:
             artist = "Unknown"
+        deltaglist = list()
+        for tag in taglist:
+            if tag.startswith("artist:"):
+                deltaglist.append(tag)
+            elif tag == "explicit" or tag == "safe" or tag == "questionable" or tag == "suggestive" or tag == "grimdark" or tag == "semi-grimdark":
+                deltaglist.append(tag)
+        for tag in deltaglist:
+            taglist.remove(tag)
+        tagcount = len(taglist)
+        more = ""
+        if tagcount > 7:
+            more = " + %s more" % str(tagcount - 7)
+        tags = taglist[:7]
+        tagsfinal = ", ".join(tags)
         response = "Derpibooru image #" + str(derpiresponse["id_number"]) + ":"
         if onion:
-            response = response + " URL: " + self.url[:-5]
-
-        response = response + " Rating: " + rating + " Artist: " + artist + " Score: " + str(derpiresponse["score"]) + " Tags: " + tags
+            response = response + " [URL: " + self.url[:-5] + "] "
+        if int(derpiresponse["upvotes"] + derpiresponse["downvotes"]) != 0:
+            percent = int(float(derpiresponse["upvotes"]) / float(derpiresponse["upvotes"] + derpiresponse["downvotes"] ) * 100)
+        else:
+            percent = "NaN"
+        response = response + " [Rating: " + rating + "] [Artist:" + artist + "] [Score: ▲".decode('utf-8') + str(derpiresponse["upvotes"]) + "/▼".decode('utf-8') + str(derpiresponse["downvotes"]) + "=" + str(derpiresponse["score"]) + "(" + str(percent) + "%)] [Tags: " + tagsfinal + more + "]"
         self.reply_func(response)
