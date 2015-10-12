@@ -79,7 +79,7 @@ class TitleFetchThread(threading.Thread):
             return e.fp.read()
         except Exception as e:
             logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
-            raise RunTimeError("urltitle: Error fetching title for URL '" + self.url +"': " + str(e))
+            raise RuntimeError("urltitle: Error fetching title for URL '" + self.url +"': " + str(e))
         return data
 
     def handle_derpibooru(self):
@@ -94,7 +94,7 @@ class TitleFetchThread(threading.Thread):
         self.url = match.group(1) + ".json"
         try:
             data = self.get_data()
-        except RunTimeError as e:
+        except RuntimeError as e:
             self.reply_func("urltitle: Error fetching data for URL '%s': %s" % (self.url, str(e)))
             logging.error("urltitle: Error fetching data for URL '%s': %s" % (self.url, str(e)))
             return
