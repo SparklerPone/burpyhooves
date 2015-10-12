@@ -71,7 +71,10 @@ class TitleFetchThread(threading.Thread):
             return
         location = yahooweather["query"]["results"]["channel"]["location"]
         temperature = weather["item"]["condition"]["temp"]
-        self.reply_func("Weather for " + location["city"] + " " + location["region"] + ", " + location["country"] + ": [Temperature: " + temperature + weather["units"]["temperature"] + "], [Condition: " + weather["item"]["condition"]["text"] + "], [Wind Speed: " + weather["wind"]["speed"] + " " + weather["units"]["speed"] + "]")
+        ctemperature = int((int(temperature) - 32)*.55)
+        wind = int(weather["wind"]["speed"])
+	kwind = int(wind*1.609344)
+        self.reply_func("Weather for " + location["city"] + " " + location["region"] + ", " + location["country"] + ": [Temperature: " + temperature + weather["units"]["temperature"] + "(" + str(ctemperature) + "C)] [Condition: " + weather["item"]["condition"]["text"] + "] [Wind Speed: " + str(wind) + weather["units"]["speed"] + "(" + str(kwind) + "km/h)]")
 #        if hasattr(soup, "title") and soup.title is not None:
 #            self.reply_func("[ %s ]" % (soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]))
 
