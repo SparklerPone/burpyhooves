@@ -52,6 +52,7 @@ class BurpyHooves:
                 self.requests_session.proxies = {"http": proxy, "https": proxy}
 
         self.flood_verbs = [x.lower() for x in self.net.get("flood_verbs", [])]
+        self.skybot = self.config["misc"]["skybot_nick"]
 
     def run(self):
         self.connection.connect()
@@ -109,7 +110,7 @@ class BurpyHooves:
             ln = Line.parse(line)
             self.state["last_line"] = ln
             self.parse_line(ln)
-            self.hook_manager.run_irc_hooks(ln)
+            self.hook_manager.run_irc_hooks(ln, self)
 
         return True
 

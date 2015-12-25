@@ -81,14 +81,17 @@ class HookManager:
         self._remove_hooks()
         self._add_hooks()
 
-    def run_irc_hooks(self, ln):
+    def run_irc_hooks(self, ln, bot):
         self.run_hooks("irc_raw_%s" % ln.command, ln)
         self.run_hooks("irc_raw", ln)
         if ln.command == "PRIVMSG":
             message = ln.params[-1]
             if not message:
                 return
+            sender = ln.hostmask.nick
             splitmsg = message.split(" ")
+            if ln.hostmask.nick.lower() == bot.skybot.lower():
+                splitmsg = splitmsg[1:]
             for prefix in self.bot.config["misc"]["command_prefix"]:
                 if splitmsg[0].decode('utf-8').startswith(prefix.decode('utf-8')):
                     command = splitmsg[0][1:]
@@ -97,7 +100,7 @@ class HookManager:
                         "ln": ln,
                         "command": command,
                         "args": args,
-                        "sender": ln.hostmask.nick,
+                        "sender": sender,
                         "target": ln.params[0]
                     }
                     self.run_hooks("command_%s" % command.lower(), event_args)
