@@ -19,13 +19,37 @@ class BuhModule(Module):
     def module_init(self, bot):
 	random.seed()
         self.hook_command("bored", self.command_bored)
+        self.hook_command("boredx", self.command_boredx)
+
+    def gen_buh(self,length):
+        colors = [random.randint(1,15) for i in xrange(2)]
+        uColors = [random.randint(1,15) for i in xrange(random.randint(1,length))]
+        blast = True if random.randint(1,25) == 1 else False
+
+        msg = '\x03' + str(colors[0])
+        if blast:
+            msg += 'h'
+        else:
+            msg += 'b'
+        msg += self.gen_u(uColors)
+        msg += '\x03' + str(random.randint(1,15))
+        if blast:
+            msg += 'b'
+        else:
+            msg += 'h'
+        return msg
+
+    def gen_u(self, colors):
+        u = ""
+        for i in colors:
+            u += '\x03' + str(i) + 'u'
+        return u
 
     def command_bored(self, bot, event_args):
-	u = random.randint(1,20)
-	colors = [random.randint(1,15) for i in xrange(2)]
-	uColors = [random.randint(1,15) for i in xrange(random.randint(1,20))]
-	msg = '\x03' + str(colors[0]) + 'b'
-	for i in uColors:
-	    msg += '\x03' + str(i) + 'u'
-	msg += '\x03' + str(i) + 'h'
+	msg = self.gen_buh(random.randint(1,20))
 	bot.reply(msg)
+
+    def command_boredx(self, bot, event_args):
+        msg = self.gen_buh(random.randint(1,50))
+        bot.reply(msg)
+
