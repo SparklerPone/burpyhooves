@@ -21,6 +21,7 @@ import threading
 import socks
 import socket
 import json
+import ssl
 
 from bs4 import BeautifulSoup
 from modules import Module
@@ -52,6 +53,7 @@ class TitleFetchThread(threading.Thread):
         self.url = url
         self.reply_func = reply_func
         self.module = module
+        self.ignorecert = False
 
     def run(self):
         socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
@@ -72,9 +74,13 @@ class TitleFetchThread(threading.Thread):
             self.reply_func("[ %s ]" % (soup.title.text.strip().replace("\r", "").replace("\n", "")[:128]))
 
     def get_data(self):
+        ctx = ssl.create_default_context()
+        if self.ignorecert:
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
         try:
             request = urllib2.Request(self.url)
-            data = urllib2.urlopen(request)
+            data = urllib2.urlopen(request, context=ctx)
         except urllib2.HTTPError as e:
             return e.fp.read()
         except Exception as e:
@@ -84,14 +90,18 @@ class TitleFetchThread(threading.Thread):
 
     def handle_derpibooru(self):
         onion = False
+        self.ignorecert = True
         if "ronxgr5zb4dkwdpt.onion" in self.url:
-            self.url = self.url.replace("ronxgr5zb4dkwdpt.onion", "derpiboo.ru")
             onion = True
         elif "derpicdn.net" in self.url:
             match = re.match("https?://derpicdn.net/img/view/\d+/\d+/\d+/(\d+).*", self.url)
-            self.url = "https://derpiboo.ru/" + match.group(1)
+            self.url = "https://178.33.231.189/" + match.group(1)
         match = re.match("^([^?]+)", self.url)
         self.url = match.group(1) + ".json"
+        self.url = self.url.replace("derpibooru.org","178.33.231.189")
+        self.url = self.url.replace("derpiboo.ru","178.33.231.189")
+        self.url = self.url.replace("ronxgr5zb4dkwdpt.onion","178.33.231.189")
+        self.url = self.url.replace("www.","")
         try:
             data = self.get_data()
         except RuntimeError as e:
@@ -101,7 +111,6 @@ class TitleFetchThread(threading.Thread):
         except Exception as e:
             logging.error("urltitle: Error fetching title for URL '%s': %s" % (self.url, str(e)))
             return
-
         derpiresponse = json.load(data)
         artist = ""
         taglist = derpiresponse["tags"].split(", ")
@@ -126,8 +135,10 @@ class TitleFetchThread(threading.Thread):
         tags = taglist[:7]
         tagsfinal = ", ".join(tags)
         response = "Derpibooru image #" + str(derpiresponse["id_number"]) + ":"
+        tempurl = None
         if onion:
-            response = response + " [URL: " + self.url[:-5] + "] "
+            tempurl = self.url[:-5].replace("178.33.231.189","derpiboo.ru")
+            response = response + " [URL: " + tempurl + " ]"
         if int(derpiresponse["upvotes"] + derpiresponse["downvotes"]) != 0:
             percent = int(float(derpiresponse["upvotes"]) / float(derpiresponse["upvotes"] + derpiresponse["downvotes"] ) * 100)
         else:
