@@ -18,6 +18,7 @@ from collections import deque
 import string
 import sqlite3
 import datetime
+import re
 
 class MuckModule(Module):
     name = "muck"
@@ -354,6 +355,9 @@ class MuckModule(Module):
 	if self.check_char_exists(args[0]):
 	    bot.reply("%s is already claimed." % args[0])
 	    return
+        if not self.valid_irc_name(args[0]):
+            bot.reply("%s is not a valid irc nickname." % args[0])
+            return
 	queue_data = [event_args, 0]
 	self.message_queue.append(queue_data)
 	bot.raw("WHOIS " + event_args["sender"])
@@ -379,7 +383,7 @@ class MuckModule(Module):
 	if not self.check_char_exists(name):
 	    bot.reply("%s does not exist as a character." % name)
 	    return
-	if len(str.join("",args[2:])) > 300:
+	if len(str.join(" ",args[2:])) > 300:
 	    bot.reply("Maximum length for a value is 300 characters")
 	    return
 
@@ -390,8 +394,12 @@ class MuckModule(Module):
             return
 
 	if attribute == "irc_name":
-	    bot.reply("You may not change your irc nickname.")
-	    return
+            if self.check_char_exists(args[2]):
+                bot.reply("%s already exists as a character." % args[2])
+	        return
+            if not self.valid_irc_name(args[2]):
+                bot.reply("%s is not a valid irc name." % args[2])
+                return
 
 	queue_data = [event_args, 0]
 	self.message_queue.append(queue_data)
@@ -408,14 +416,17 @@ class MuckModule(Module):
 	        continue
 	    else:
 		command = message[0]["command"]
-		if(command == "claim"):
-		    self.do_claim(bot, message[0], accountname)
-		elif(command == "edit"):
-		    self.do_edit(bot, message[0], accountname)
-		elif(command == "delchar"):
-		    self.do_delchar(bot, message[0], accountname)
-		elif(command == "listchars"):
-		    self.do_listchars(bot, message[0], accountname)
+                try:
+		    if(command == "claim"):
+		        self.do_claim(bot, message[0], accountname)
+		    elif(command == "edit"):
+		        self.do_edit(bot, message[0], accountname)
+		    elif(command == "delchar"):
+		        self.do_delchar(bot, message[0], accountname)
+		    elif(command == "listchars"):
+		        self.do_listchars(bot, message[0], accountname)
+                except Exception as e:
+                    self.send_message(bot, message[0]["target"], message[0]["sender"], str(e))
 		messagelist.append(message)
 	for message in messagelist:
 	    self.message_queue.remove(message)
@@ -601,4 +612,7 @@ class MuckModule(Module):
 	    bot.privmsg(source,message)
 	    return
 	#channel message
-	bot.privmsg(target,message) 
+	bot.privmsg(target,message)
+
+    def valid_irc_name(self, nick):
+        return re.match("^[A-Za-z_\-\[\]\\^{}|`][A-Za-z0-9_\-\[\]\\^{}|`]*$", nick)
