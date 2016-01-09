@@ -19,6 +19,7 @@ import string
 import sqlite3
 import datetime
 import re
+import random
 
 class MuckModule(Module):
     name = "muck"
@@ -99,7 +100,13 @@ class MuckModule(Module):
                 print("Failed to update to version 2 DB, hopefully you had a backup. Aborting!")
                 print("Exception was: %s" % (str(e)))
                 return "Failed to update to DB version 2, see console for more details"
-
+        if version[0] < 3:
+            try:
+                print("Old version of DB detected, updating to version 3.")
+            except Exception as e:
+                print("Failed to update to version 3 DB, hopefully you had a backup. Aborting!")
+                print("Exception was: %s" % (str(e)))
+                return "Failed to update to DB version 2, see console for more details"
 
 	self.hook_command("claim", self.command_claim)
 	self.hook_command("hoof", self.command_hoof)
@@ -112,6 +119,7 @@ class MuckModule(Module):
 	self.hook_command("dbversion", self.command_dbversion)
 	self.hook_command("findchar", self.command_findchar)
 	self.hook_command("techinfo", self.command_techinfo)
+	self.hook_command("randomhorse", self.command_randomhorse)
 	self.hook_numeric("330", self.handle_330)
 	self.hook_numeric("PRIVMSG", self.on_privmsg)
 
@@ -164,7 +172,7 @@ class MuckModule(Module):
 	args = event_args["args"]
 	prefix = bot.config["misc"]["command_prefix"][0]
 	if len(args) == 0:
-	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo {0}listchars {0}listallchars. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <attribute> <value> to edit them.".format(prefix))
+	    bot.reply("My commands are {0}help {0}claim {0}hoof {0}edit {0}findchar {0}delplayer {0}delchar {0}dbversion {0}techinfo {0}listchars {0}listallchars {0}randomhorse. Use {0}help <command> for more info on each one. Use {0}claim <name> to claim a character and then {0}edit <name> <attribute> <value> to edit them.".format(prefix))
 	    return
 	if args[0] == "claim":
 	    bot.reply("{0}claim <charactername>: Claims a character as your own. No spaces allowed".format(prefix))
@@ -190,7 +198,20 @@ class MuckModule(Module):
 	    bot.reply("{0}findchar [attribute] <search terms>: Searches the database for characters that match the search terms. Defaults to search by name if no attribute given.".format(prefix))
 	elif args[0] == "techinfo":
 	    bot.reply("{0}techinfo <charname>: Returns all the technical info about a character".format(prefix))
+	elif args[0] == "randomhorse":
+	    bot.reply("{0}randomhorse: Returns a random character(Filters coming later)".format(prefix))
 	return
+
+    def command_randomhorse(self, bot, event_args):
+	accounts = self.get_accounts()
+        if accounts == "":
+            bot.reply("I have no characters stored.")
+            return
+        accounts = list(set(accounts))
+	allchars = list()
+        for account in accounts:
+            allchars += self.get_chars(account)
+	bot.reply(random.choice(allchars))
 
     def command_techinfo(self, bot, event_args):
 	args = event_args["args"]
