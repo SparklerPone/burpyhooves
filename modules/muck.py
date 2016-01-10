@@ -410,7 +410,7 @@ class MuckModule(Module):
 
 	attribute = str(args[1].lower())
 
-	if attribute not in self.attributes:
+	if attribute not in self.attributes and attribute != "nickserv_account":
 	    bot.reply("%s is not a valid attribute. See \".help attributes\"" % attribute)
             return
 
@@ -421,8 +421,12 @@ class MuckModule(Module):
             if not self.valid_irc_name(args[2]):
                 bot.reply("%s is not a valid irc name." % args[2])
                 return
+	if attribute == "nickserv_account":
+	    if not self.valid_irc_name(args[2]):
+		bot.reply("%s is not a valid irc name." % args[2])
+		return
 
-	queue_data = [event_args, 0]
+	queue_data = [event_args, 0, bot.check_permission("admin", "")]
 	self.message_queue.append(queue_data)
 	bot.raw("WHOIS " + event_args["sender"])
 
@@ -441,7 +445,7 @@ class MuckModule(Module):
 		    if(command == "claim"):
 		        self.do_claim(bot, message[0], accountname)
 		    elif(command == "edit"):
-		        self.do_edit(bot, message[0], accountname)
+		        self.do_edit(bot, message[0], accountname, message[2])
 		    elif(command == "delchar"):
 		        self.do_delchar(bot, message[0], accountname)
 		    elif(command == "listchars"):
@@ -481,7 +485,7 @@ class MuckModule(Module):
 	#checks if accountname owns the character "name"
 	c = self.dbconn.cursor()
 	c.execute("SELECT nickserv_account FROM characters WHERE char_ircname = ? COLLATE NOCASE;", (name,))
-	if c.fetchone()[0] == accountname:
+	if c.fetchone()[0].lower() == accountname.lower():
 	    return True
 	return False
 
@@ -539,12 +543,12 @@ class MuckModule(Module):
 	self.send_message(bot, message["target"], message["sender"], "%s has claimed the character %s" % (message["sender"], message["args"][0]))
 	return
 
-    def do_edit(self, bot, event_args, accountname):
+    def do_edit(self, bot, event_args, accountname, admin=False):
 	#checks if a person has permission to edit a character then edits it
 	args = event_args["args"]
 	c = self.dbconn.cursor()
 	name = str(args[0])
-	if not self.check_ownership(name, accountname):
+	if not self.check_ownership(name, accountname) and not admin:
 	    self.send_message(bot, event_args["target"], event_args["sender"],"You do not have permission to edit this character.")
 	    return
 	data = str.join(" ",args[2:])
@@ -557,6 +561,10 @@ class MuckModule(Module):
 		sqlstring = ("UPDATE characters SET %s = ? WHERE char_ircname = ? COLLATE NOCASE;" % self.sqlattributes[i])
 		break
 	    i += 1
+
+	if not sqlstring:
+	#must be nickserv_account
+	    sqlstring = "UPDATE characters SET nickserv_account = ? WHERE char_ircname = ? COLLATE NOCASE;"
 
 	c.execute(sqlstring, (data,name))
 	c.execute("UPDATE characters SET timestamp = ? WHERE char_ircname = ? COLLATE NOCASE;", (datetime.datetime.now(),name))
