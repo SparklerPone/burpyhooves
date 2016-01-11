@@ -90,8 +90,10 @@ class HookManager:
                 return
             sender = ln.hostmask.nick
             splitmsg = message.split(" ")
-            if ln.hostmask.nick.lower() == bot.skybot.lower():
-                splitmsg = splitmsg[1:]
+            for skynick in bot.skybot:
+                if ln.hostmask.nick.lower() == skynick.lower():
+                    splitmsg = splitmsg[1:]
+                    break
             for prefix in self.bot.config["misc"]["command_prefix"]:
                 if splitmsg[0].decode('utf-8').startswith(prefix.decode('utf-8')):
                     command = splitmsg[0][1:]
