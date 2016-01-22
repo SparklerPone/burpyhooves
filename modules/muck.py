@@ -20,6 +20,7 @@ import sqlite3
 import datetime
 import re
 import random
+import traceback
 
 class MuckModule(Module):
     name = "muck"
@@ -27,11 +28,11 @@ class MuckModule(Module):
     message_queue = deque()
     dbconn = 0
     attributes = [ "irc_name", "fullname", "othername", "sex", "species", "job", "age", "coat", "mane", "accessories", "eyes", "cm", "orientation",
-		   "height", "weight", "smell", "taste", "feel", "fetish", "url", "short", "long1", "long2",
+		   "height", "weight", "smell", "taste", "feel", "voice", "fetish", "url", "short", "long1", "long2",
 		   "long3"]
     sqlattributes = [ "char_ircname", "char_fullname", "char_othername", "char_sex", "char_species", "char_job", "char_age", "char_coat",
 		      "char_mane", "char_accessories", "char_eyes", "char_cm", "char_orientation", "char_height",
-		      "char_weight", "char_smell", "char_taste", "char_feel", "char_fetish", "char_url",
+		      "char_weight", "char_smell", "char_taste", "char_feel", "char_voice", "char_fetish", "char_url",
 		      "char_short", "char_long1", "char_long2", "char_long3"]
 
     def module_init(self, bot):
@@ -103,10 +104,35 @@ class MuckModule(Module):
         if version[0] < 3:
             try:
                 print("Old version of DB detected, updating to version 3.")
+                c.execute('''CREATE TABLE characters_new
+                (char_ircname TEXT NOT NULL, char_fullname TEXT, char_othername TEXT, char_sex TEXT, char_species TEXT, char_job TEXT,
+                 char_age INTEGER, char_coat TEXT, char_mane TEXT, char_accessories TEXT, char_eyes TEXT,
+                 char_cm TEXT, char_orientation TEXT, char_height TEXT, char_weight TEXT,
+                 char_smell TEXT, char_taste TEXT, char_feel TEXT, char_voice TEXT, char_fetish TEXT, char_url TEXT,
+                 char_short TEXT, char_long1 TEXT, char_long2 TEXT, char_long3 TEXT,
+                 nickserv_account TEXT NOT NULL, timestamp TEXT, creation_time TEXT);''')
+                c.execute("ALTER TABLE characters add column char_voice TEXT")
+                self.dbconn.commit()
+                c.execute('''SELECT char_ircname,char_fullname,char_othername,char_sex,char_species,char_job,char_age,char_coat,
+                        char_mane,char_accessories,char_eyes,char_cm,char_orientation,char_height,char_weight,char_smell,
+                        char_taste,char_feel,char_fetish,char_url,char_short,char_long1,char_long2,char_long3,nickserv_account,
+                        timestamp,creation_time FROM characters''')
+                rows = c.fetchall()
+                for row in rows:
+                    row = list(row)
+                    row.insert(19,"")
+                    c.execute("INSERT INTO characters_new VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row)
+                c.execute("DROP TABLE characters")
+                c.execute("ALTER TABLE characters_new RENAME TO characters")
+                c.execute("PRAGMA user_version = 3")
+                self.dbconn.commit()
+                version[0] = 3
+                print("DB successfully updated to version 3!")
             except Exception as e:
+                traceback.print_exc()
                 print("Failed to update to version 3 DB, hopefully you had a backup. Aborting!")
                 print("Exception was: %s" % (str(e)))
-                return "Failed to update to DB version 2, see console for more details"
+                return "Failed to update to DB version 3, see console for more details"
 
 	self.hook_command("claim", self.command_claim)
 	self.hook_command("hoof", self.command_hoof)
