@@ -18,8 +18,6 @@ import re
 import logging
 import urllib2
 import threading
-import socks
-import socket
 import json
 import ssl
 
@@ -56,9 +54,6 @@ class TitleFetchThread(threading.Thread):
         self.ignorecert = False
 
     def run(self):
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 9050, True)
-        socket.socket = socks.socksocket
-
         if re.match("^https?://(www\.)?(derpiboo(ru\.org|\.ru)|ronxgr5zb4dkwdpt\.onion|derpicdn.net)/.+", self.url):
             self.handle_derpibooru()
             return
@@ -90,17 +85,17 @@ class TitleFetchThread(threading.Thread):
 
     def handle_derpibooru(self):
         onion = False
+        ratingtags = [ "explicit", "safe", "questionable", "suggestive", "grimdark", "semi-grimdark", "grotesque" ]
         self.ignorecert = True
         if "ronxgr5zb4dkwdpt.onion" in self.url:
             onion = True
         elif "derpicdn.net" in self.url:
             match = re.match("https?://derpicdn.net/img/view/\d+/\d+/\d+/(\d+).*", self.url)
-            self.url = "https://178.33.231.189/" + match.group(1)
+            self.url = "https://ronxgr5zb4dkwdpt.onion/" + match.group(1)
         match = re.match("^([^?]+)", self.url)
         self.url = match.group(1) + ".json"
-        self.url = self.url.replace("derpibooru.org","178.33.231.189")
-        self.url = self.url.replace("derpiboo.ru","178.33.231.189")
-        self.url = self.url.replace("ronxgr5zb4dkwdpt.onion","178.33.231.189")
+        self.url = self.url.replace("derpibooru.org","ronxgr5zb4dkwdpt.onion")
+        self.url = self.url.replace("derpiboo.ru","ronxgr5zb4dkwdpt.onion")
         self.url = self.url.replace("www.","")
         try:
             data = self.get_data()
@@ -113,18 +108,21 @@ class TitleFetchThread(threading.Thread):
             return
         derpiresponse = json.load(data)
         artist = ""
+        rating = ""
         taglist = derpiresponse["tags"].split(", ")
         for tag in taglist:
-            if tag == "explicit" or tag == "safe" or tag == "questionable" or tag == "suggestive" or tag == "grimdark" or tag == "semi-grimdark":                                                                                                          rating = tag
+            if tag in ratingtags:
+                rating += tag + ", "
             if tag.startswith(u"artist:"):
                  artist = artist + " " + tag[7:]
         if not artist:
             artist = "Unknown"
         deltaglist = list()
+        rating = rating[:-2]
         for tag in taglist:
             if tag.startswith("artist:"):
                 deltaglist.append(tag)
-            elif tag == "explicit" or tag == "safe" or tag == "questionable" or tag == "suggestive" or tag == "grimdark" or tag == "semi-grimdark":
+            elif tag in ratingtags:
                 deltaglist.append(tag)
         for tag in deltaglist:
             taglist.remove(tag)
@@ -145,3 +143,4 @@ class TitleFetchThread(threading.Thread):
             percent = "NaN"
         response = response + " [Rating: " + rating + "] [Artist:" + artist + "] [Score: ▲".decode('utf-8') + str(derpiresponse["upvotes"]) + "/▼".decode('utf-8') + str(derpiresponse["downvotes"]) + "=" + str(derpiresponse["score"]) + "(" + str(percent) + "%)] [Tags: " + tagsfinal + more + "]"
         self.reply_func(response)
+
