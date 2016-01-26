@@ -285,7 +285,9 @@ class MuckModule(Module):
 	    return
 
 	if len(rows) > 4:
-	    bot.reply("Found %s matches, please narrow your search" % len(rows))
+	    bot.reply("Found %s matches. Results will be sent in query." % len(rows))
+            for i in rows:
+                bot.privmsg(event_args["sender"], "Character: " + i[0] + " owned by: " + i[1] + ".")
 	    return
 
 	replystring = "Found %s match(es):" % len(rows)
