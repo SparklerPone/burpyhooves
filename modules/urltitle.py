@@ -132,7 +132,7 @@ class TitleFetchThread(threading.Thread):
             more = " + %s more" % str(tagcount - 7)
         tags = taglist[:7]
         tagsfinal = ", ".join(tags)
-        response = "Derpibooru image #" + str(derpiresponse["id_number"]) + ":"
+        response = "Derpibooru image #" + str(derpiresponse["id"]) + ":"
         tempurl = None
         if onion:
             tempurl = self.url[:-5].replace("178.33.231.189","derpiboo.ru")
