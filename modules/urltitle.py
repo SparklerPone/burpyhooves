@@ -135,7 +135,7 @@ class TitleFetchThread(threading.Thread):
         response = "Derpibooru image #" + str(derpiresponse["id"]) + ":"
         tempurl = None
         if onion:
-            tempurl = self.url[:-5].replace("178.33.231.189","derpiboo.ru")
+            tempurl = self.url[:-5].replace("ronxgr5zb4dkwdpt.onion","derpiboo.ru")
             response = response + " [URL: " + tempurl + " ]"
         if int(derpiresponse["upvotes"] + derpiresponse["downvotes"]) != 0:
             percent = int(float(derpiresponse["upvotes"]) / float(derpiresponse["upvotes"] + derpiresponse["downvotes"] ) * 100)
