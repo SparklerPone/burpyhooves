@@ -15,6 +15,7 @@
 import sys
 import logging
 import traceback
+import re
 
 from collections import defaultdict
 
@@ -89,11 +90,11 @@ class HookManager:
             if not message:
                 return
             sender = ln.hostmask.nick
-            splitmsg = message.split(" ")
             for skynick in bot.skybot:
                 if ln.hostmask.nick.lower() == skynick.lower():
-                    splitmsg = splitmsg[1:]
+                    message = re.sub(r"<[^>]*>\s*","",message)
                     break
+            splitmsg = message.split(" ")
             for prefix in self.bot.config["misc"]["command_prefix"]:
                 if splitmsg[0].decode('utf-8').startswith(prefix.decode('utf-8')):
                     command = splitmsg[0][1:]
